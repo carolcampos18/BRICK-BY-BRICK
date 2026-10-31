@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#081c22">
+<title>Brick by Brick</title>
+<link rel="icon" href="logo.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg1:#06161c; --bg2:#103b3d; --line:rgba(170,215,198,.30); --txt:#e9f6ef; --soft:#9cc4b6;
+    --gold:#f2c46d; --gold2:#e5a73f; --ink:#3a2600;
+    --sans:'Outfit','Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+    --serif:'Cormorant Garamond','GFS Baskerville',Georgia,'Times New Roman',serif;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;height:100%;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:var(--txt);
+    font-family:var(--sans);overflow:hidden;touch-action:manipulation;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;overscroll-behavior:none}
+  .hidden{display:none !important}
+  #stars{position:fixed;inset:0;pointer-events:none;opacity:.8}
+  svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+  .serif{font-family:var(--serif);font-weight:700}
+
+  /* ---------- vidro (estilo da referência 3) ---------- */
+  .glass{background:linear-gradient(180deg,rgba(44,92,94,.58),rgba(22,58,62,.62));border:1.5px solid var(--line);border-radius:26px;
+    box-shadow:0 12px 32px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.07)}
+  .pill{display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 14px;border-radius:16px;font-weight:600;font-size:18px;white-space:nowrap;
+    background:linear-gradient(180deg,rgba(44,92,94,.6),rgba(18,48,52,.7));border:1.5px solid var(--line);box-shadow:0 4px 0 rgba(0,0,0,.28)}
+  .pill .star{width:20px;height:20px;fill:var(--gold);stroke:none}
+  .coin{display:inline-block;width:20px;height:20px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff3b0,#ffc300 55%,#c98a00);border:2px solid #a86b00;flex:none}
+  .round{width:44px;height:44px;border-radius:16px;display:grid;place-items:center;color:var(--gold);cursor:pointer;padding:0;
+    background:linear-gradient(180deg,rgba(44,92,94,.6),rgba(18,48,52,.75));border:1.5px solid var(--line);box-shadow:0 4px 0 rgba(0,0,0,.28)}
+  .round:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.28)}
+  body:not(.muted) .i-off,body.muted .i-on{display:none}
+
+  .btn{font-family:var(--sans);font-weight:700;font-size:20px;letter-spacing:.3px;display:inline-flex;align-items:center;justify-content:center;gap:10px;
+    border-radius:22px;padding:0 24px;height:58px;cursor:pointer;color:var(--ink);
+    background:linear-gradient(180deg,#f9dc92,#eab04a);border:1.5px solid rgba(255,238,190,.75);box-shadow:0 5px 0 #a87420,0 14px 22px rgba(0,0,0,.35);
+    transition:transform .08s,box-shadow .08s}
+  .btn:active{transform:translateY(4px);box-shadow:0 1px 0 #a87420,0 6px 12px rgba(0,0,0,.35)}
+  .btn.alt{color:var(--txt);background:linear-gradient(180deg,rgba(48,98,100,.7),rgba(22,58,62,.8));border:1.5px solid var(--line);box-shadow:0 5px 0 rgba(0,0,0,.32),0 12px 20px rgba(0,0,0,.25)}
+  .btn.alt:active{box-shadow:0 1px 0 rgba(0,0,0,.32)}
+  .btn.alt .ic{color:var(--gold)}
+  .btn.big{width:100%;height:66px;font-size:26px;letter-spacing:2px}
+  .btn.big .ic{width:28px;height:28px}
+  .btn:disabled{filter:saturate(.5) brightness(.85);cursor:default}
+  .btn.alt:disabled{filter:none;opacity:.85;color:var(--gold)}
+  .xp{height:7px;border-radius:99px;background:rgba(0,0,0,.4);border:1px solid rgba(170,215,198,.25);overflow:hidden;margin:7px 4px 0}
+  .xp i{display:block;height:100%;width:0;background:linear-gradient(90deg,#f6d489,var(--gold2));border-radius:99px}
+
+  .screen{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;padding:calc(14px + env(safe-area-inset-top)) 16px 16px;gap:12px;overflow:auto}
+  .nav-screen{padding-bottom:calc(104px + env(safe-area-inset-bottom))}
+  .head{display:flex;align-items:center;justify-content:space-between;width:min(430px,100%)}
+  .head h2{margin:0;font-size:40px;line-height:1;color:#f1fbf6}
+
+  /* ---------- início ---------- */
+  .topbar{display:flex;gap:10px;align-items:flex-start;width:min(430px,100%)}
+  .grow{flex:1}
+  .lvl{width:128px}
+  .stack{margin:auto 0;display:flex;flex-direction:column;align-items:center;gap:12px;width:min(380px,100%)}
+  .logo{width:min(72vw,300px);height:auto;filter:drop-shadow(0 8px 14px rgba(0,0,0,.45))}
+  .scene{width:100%;height:clamp(200px,32vh,300px);border-radius:28px;overflow:hidden;position:relative;border:1.5px solid var(--line);
+    background:radial-gradient(120% 90% at 80% 12%,rgba(255,244,200,.16),transparent 55%),linear-gradient(180deg,#0a2430 0%,#10393f 62%,#1a5352 100%);
+    box-shadow:0 14px 34px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.07);display:flex;justify-content:center}
+  #hero{height:100%;width:auto;display:block}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%}
+  .row2 .btn{width:100%;height:56px;font-size:17px;padding:0 10px}
+
+  /* ---------- menu inferior ---------- */
+  #nav{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom));transform:translateX(-50%);width:min(430px,calc(100% - 28px));z-index:20;
+    display:flex;gap:6px;padding:8px;border-radius:28px;background:linear-gradient(180deg,rgba(30,70,74,.92),rgba(14,40,44,.95));border:1.5px solid var(--line);box-shadow:0 14px 30px rgba(0,0,0,.5)}
+  #nav button{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 4px 7px;border-radius:20px;border:0;background:transparent;color:var(--soft);font:600 13px var(--sans);cursor:pointer}
+  #nav button .ic{width:24px;height:24px}
+  #nav button.on{background:linear-gradient(180deg,#f9dc92,#eab04a);color:var(--ink);box-shadow:0 3px 0 #a87420}
+
+  /* ---------- loja / perfil / ajuda ---------- */
+  .tabs{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;width:min(430px,100%)}
+  .tab{font-family:var(--sans);font-weight:600;font-size:15px;padding:9px 16px;border-radius:14px;border:1.5px solid var(--line);background:rgba(20,52,56,.7);color:var(--txt);cursor:pointer}
+  .tab.on{background:linear-gradient(180deg,#f9dc92,#eab04a);color:var(--ink);border-color:transparent}
+  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;width:min(430px,100%)}
+  .item{padding:12px;display:flex;flex-direction:column;align-items:center;gap:8px;border-radius:22px;
+    background:linear-gradient(180deg,rgba(44,92,94,.58),rgba(22,58,62,.62));border:1.5px solid var(--line);box-shadow:0 12px 32px rgba(0,0,0,.35)}
+  .item.eq{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset,0 12px 32px rgba(0,0,0,.35)}
+  .item canvas{width:88px;height:88px;border-radius:16px;background:rgba(4,20,24,.55);border:1px solid rgba(170,215,198,.15)}
+  .item .nm{font-weight:600;font-size:17px}
+  .item .btn{width:100%;height:42px;font-size:16px;padding:0 6px;border-radius:15px;box-shadow:0 4px 0 #a87420}
+  .item .btn.alt{box-shadow:0 4px 0 rgba(0,0,0,.32)}
+  .card{width:min(430px,100%);padding:18px 20px}
+  .card h3{margin:0 0 10px;font-size:20px;color:var(--gold);display:flex;align-items:center;gap:8px}
+  .card ul{margin:0;padding:0;list-style:none;display:grid;gap:9px;color:var(--txt);font-size:16px;line-height:1.35}
+  .card li b{color:var(--gold);font-weight:600}
+  .card li{padding-left:18px;position:relative}
+  .card li:before{content:"";position:absolute;left:0;top:.5em;width:8px;height:8px;background:var(--gold);transform:rotate(45deg);border-radius:2px}
+  kbd{background:rgba(255,255,255,.1);border:1px solid var(--line);border-bottom-width:3px;border-radius:7px;padding:1px 7px;font-family:inherit;font-size:.9em}
+  .prof{display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center}
+  .prof canvas{width:120px;height:120px}
+  .prof .big{font-size:52px;line-height:1}
+  .prof .xp{width:80%;height:9px}
+  .prof .sub{color:var(--soft);font-size:14px;margin-top:6px}
+  .stat{display:flex;justify-content:space-between;align-items:baseline;padding:11px 0;border-bottom:1px solid rgba(170,215,198,.14);font-size:17px}
+  .stat:last-child{border:0}
+  .stat b{font-family:var(--serif);font-size:26px;color:#f1fbf6}
+
+  /* ---------- jogo ---------- */
+  #game{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
+  #stage{display:flex;gap:14px;align-items:center;justify-content:center;width:100%;height:100%;padding:8px}
+  canvas.arena{flex-shrink:0;border-radius:24px;border:1.5px solid var(--line);box-shadow:0 10px 40px rgba(0,0,0,.5);background:#071820;touch-action:none}
+  .topbtns{position:fixed;top:10px;right:10px;display:flex;gap:8px;z-index:5}
+  @media (pointer:coarse){.topbtns{top:auto;bottom:calc(10px + env(safe-area-inset-bottom));left:50%;right:auto;transform:translateX(-50%)}
+    #stage{padding-bottom:calc(66px + env(safe-area-inset-bottom))}}
+  #overlay{position:fixed;inset:0;background:rgba(2,10,14,.7);display:flex;align-items:center;justify-content:center;z-index:10;padding:20px}
+  .panel{padding:26px 22px;display:flex;flex-direction:column;gap:12px;align-items:center;text-align:center;max-width:380px;width:100%;
+    background:linear-gradient(180deg,rgba(44,92,94,.9),rgba(18,48,52,.95));border:1.5px solid var(--line);border-radius:28px;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+  .panel h2{margin:0;font-family:var(--serif);font-weight:700;font-size:42px;line-height:1;color:#f6fbf8}
+  .panel p{margin:0;color:var(--soft);font-size:18px}
+  .panel .btn{width:100%}
+  #nophys{position:fixed;inset:0;z-index:50;background:#071820;display:flex;align-items:center;justify-content:center;text-align:center;padding:30px;font-size:20px}
+  @media (pointer:fine){.only-touch{display:none}}
+  @media (pointer:coarse){.only-kbd{display:none}}
+</style>
+</head>
+<body>
+<canvas id="stars"></canvas>
+<div id="nophys" class="hidden">Não consegui carregar o motor de física.<br>Verifique sua internet e recarregue a página.</div>
+
+<!-- ============ INÍCIO ============ -->
+<div id="menu" class="screen nav-screen">
+  <div class="topbar">
+    <div class="lvl">
+      <div class="pill"><svg class="star" viewBox="0 0 24 24"><path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2 6.3 20.3l1.2-6.4L2.8 9.5l6.4-.8z"/></svg>Nv. <span id="lvlNum">1</span></div>
+      <div class="xp"><i id="xpFill"></i></div>
+    </div>
+    <div class="pill"><span class="coin"></span><span id="walletMenu">0</span></div>
+    <span class="grow"></span>
+    <button class="round" id="btnMute" aria-label="Som">
+      <svg class="ic i-on" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>
+      <svg class="ic i-off" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>
+    </button>
+  </div>
+  <div class="stack">
+    <img class="logo" src="logo.svg" alt="Brick by Brick">
+    <div class="scene"><canvas id="hero" aria-hidden="true"></canvas></div>
+    <button class="btn big" id="btnSolo">
+      <svg class="ic" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="6" rx="1.6"/><rect x="3" y="14" width="8" height="6" rx="1.6"/><rect x="13" y="14" width="8" height="6" rx="1.6"/></svg>JOGAR</button>
+    <div class="row2">
+      <button class="btn alt" id="btnDuo"><svg class="ic" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><circle cx="17" cy="9" r="2.8"/><path d="M2.5 20c0-3.6 2.8-6 6.5-6s6.5 2.4 6.5 6M16 14.3c3.2.1 5.5 2 5.5 5.2"/></svg>Jogar em 2</button>
+      <button class="btn alt" id="btnShop"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 16l.7 2 2 .7-2 .7L19 21l-.7-1.6-2-.7 2-.7z"/></svg>Personalizar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ============ LOJA ============ -->
+<div id="shop" class="screen nav-screen hidden">
+  <div class="head"><h2 class="serif">Loja</h2><div class="pill"><span class="coin"></span><span id="walletShop">0</span></div></div>
+  <div class="tabs" id="tabs"></div>
+  <div class="grid" id="grid"></div>
+</div>
+
+<!-- ============ PERFIL ============ -->
+<div id="profile" class="screen nav-screen hidden">
+  <div class="head"><h2 class="serif">Perfil</h2><div class="pill"><span class="coin"></span><span id="walletProf">0</span></div></div>
+  <div class="glass card prof">
+    <canvas id="profCv"></canvas>
+    <div class="serif big" id="pLvl">Nv. 1</div>
+    <div class="xp"><i id="pXp"></i></div>
+    <div class="sub" id="pXpTxt"></div>
+  </div>
+  <div class="glass card" id="pStats"></div>
+</div>
+
+<!-- ============ AJUDA ============ -->
+<div id="help" class="screen nav-screen hidden">
+  <div class="head"><h2 class="serif">Como jogar</h2></div>
+  <div class="glass card only-touch"><h3>No celular</h3><ul>
+    <li><b>Arraste</b> o dedo para os lados para mover a peça.</li>
+    <li><b>Toque</b> rápido na tela para girar.</li>
+    <li><b>Deslize para baixo</b> e segure para a peça cair mais rápido.</li>
+    <li>No modo de 2 jogadores, cada um joga na sua metade da tela.</li></ul></div>
+  <div class="glass card only-kbd"><h3>No teclado</h3><ul>
+    <li><b>Sozinho:</b> <kbd>←</kbd> <kbd>→</kbd> mover · <kbd>↑</kbd> girar · <kbd>↓</kbd> descer.</li>
+    <li><b>Em 2:</b> Jogador 1 usa <kbd>A</kbd> <kbd>D</kbd> <kbd>W</kbd> <kbd>S</kbd>; Jogador 2 usa as setas.</li>
+    <li><kbd>P</kbd> pausa o jogo.</li></ul></div>
+  <div class="glass card"><h3>Regras</h3><ul>
+    <li>Empilhe as peças na ilha. Cada peça que cair tira uma das 3 vidas.</li>
+    <li>Pegue as <b>moedas</b> flutuantes e bata <b>recordes de altura</b> para ganhar mais.</li>
+    <li>Depois de uma certa altura, o <b>vento</b> começa a soprar.</li>
+    <li>Em 2 jogadores, vence quem chegar primeiro na linha da meta.</li>
+    <li>Gaste moedas na <b>Loja</b>: blocos, fundos, bases, chapéus e mascotes.</li></ul></div>
+</div>
+
+<!-- ============ JOGO ============ -->
+<div id="game" class="hidden">
+  <div id="stage"></div>
+  <div class="topbtns">
+    <button class="round" id="gMute" aria-label="Som">
+      <svg class="ic i-on" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>
+      <svg class="ic i-off" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>
+    </button>
+    <button class="round" id="gPause" aria-label="Pausar"><svg class="ic" viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><rect x="6" y="5" width="4" height="14" rx="1.5"/><rect x="14" y="5" width="4" height="14" rx="1.5"/></svg></button>
+  </div>
+  <div id="overlay" class="hidden"></div>
+</div>
+
+<!-- ============ MENU INFERIOR ============ -->
+<nav id="nav">
+  <button data-go="menu" class="on"><svg class="ic" viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Início</button>
+  <button data-go="shop"><svg class="ic" viewBox="0 0 24 24"><path d="M5 8h14l-1 12H6zM9 8V6a3 3 0 0 1 6 0v2"/></svg>Loja</button>
+  <button data-go="profile"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>Perfil</button>
+  <button data-go="help"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.6 2.6 0 1 1 3.6 2.4c-.8.4-1.1.9-1.1 1.8M12 17h.01"/></svg>Ajuda</button>
+</nav>
+
+<script src="https://cdn.jsdelivr.net/npm/matter-js@0.19.0/build/matter.min.js"></script>
+<script>window.Matter||document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"><\/script>')</script>
+<script src="game.js"></script>
+</body>
+</html>
