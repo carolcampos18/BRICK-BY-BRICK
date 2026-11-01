@@ -11,21 +11,24 @@ const { Engine, Bodies, Body, Composite, Events } = Matter;
 try { document.fonts.load('600 16px Outfit'); document.fonts.load('700 32px "Cormorant Garamond"'); } catch (e) {}
 
 /* ====== AJUSTES FÁCEIS (mexa aqui para mudar a dificuldade) ====== */
-const W = 400; let H = 700, CAM0 = 0;   // tamanho lógico da arena (a altura H se adapta à tela do celular)
+const ZOOM = .5;               // zoom da câmera: menor = blocos menores na tela (99 Bricks ≈ cada quadradinho 3,6% da largura)
+const W = 400, WW = W / ZOOM;  // W = largura da tela lógica; WW = largura do mundo da física
+let H = 700, WH = 1400, CAM0 = 0;   // tamanho lógico da arena (a altura H se adapta à tela do celular)
 const S = 40;                  // tamanho de cada quadradinho do bloco (maior = blocos maiores)
 const BASE_Y = 560;            // altura da superfície da ilha
-const BASE_W = 230;            // largura da ilha
+const BASE_W = 200;            // largura da ilha
+const KEEP_LIVE = 3;            // só os últimos N blocos ainda se mexem; os mais antigos viram chão firme
 const CP_FIRST = 330;          // altura (px) da 1ª linha de pavimento; ~50 px = 1 m
 const CP_STEP = 330;           // distância até a próxima linha depois de pavimentar
 const TOOLS_START = 3;         // usos da colher de pedreiro (cimento) no início
-function fitWorld() { const vw = Math.min(innerWidth, innerHeight * .62); H = Math.max(640, Math.min(940, Math.round(W * innerHeight / Math.max(1, vw)))); CAM0 = BASE_Y + 150 - H; }
+function fitWorld() { const vw = Math.min(innerWidth, innerHeight * .62); H = Math.max(640, Math.min(940, Math.round(W * innerHeight / Math.max(1, vw)))); WH = H / ZOOM; CAM0 = BASE_Y + 150 / ZOOM - WH; }
 const GOAL = 600;              // altura da meta no modo 2 jogadores
 const LIVES = 3;               // blocos que podem cair antes de perder
-const FALL = 1.0;              // velocidade normal de queda (menor = mais devagar)
-const FALL_FAST = 6;           // velocidade ao segurar "descer"
-const MOVE = 3;                // velocidade lateral no teclado
+const FALL = 1.6;              // velocidade normal de queda (menor = mais devagar)
+const FALL_FAST = 7;           // velocidade ao segurar "descer"
+const MOVE = 4;                // velocidade lateral no teclado
 const DRAG_GAIN = 0.85;        // touch: 1 = a peça acompanha o dedo exatamente; menor = menos sensível
-const MOVE_MAX = 6;            // touch: velocidade lateral máxima da peça (menor = mais firme)
+const MOVE_MAX = 9;            // touch: velocidade lateral máxima da peça (menor = mais firme)
 const DEADZONE = 8;            // touch: pixels que o dedo precisa andar antes de contar como arrasto
 const FRICTION = 1;            // atrito entre blocos (mais alto = menos escorrega)
 const FRICTION_STATIC = 10;    // atrito parado (alto = o bloco "gruda" onde pousou)
@@ -252,9 +255,9 @@ function drawSky(c, th, h, t, stars, camY) {
 }
 
 /* ====== DESENHO: BASES ====== */
-function drawBase(c, id, t) {
+function drawBase(c, id, t, cx) {
   const x0 = W / 2 - BASE_W / 2 - 4, x1 = W / 2 + BASE_W / 2 + 4, y = BASE_Y;
-  c.save(); c.lineJoin = 'round';
+  c.save(); c.lineJoin = 'round'; if (cx != null) c.translate(cx - W / 2, 0);
   if (id === 'castelo') {
     c.fillStyle = '#8f98a8'; c.fillRect(x0 + 4, y, x1 - x0 - 8, 150);
     c.fillStyle = '#6f7888'; c.fillRect(x0 + 4, y, x1 - x0 - 8, 12);
@@ -442,20 +445,20 @@ class Arena {
     this.ctrl = opt.ctrl; this.look = opt.look; this.name = opt.name; this.limit = opt.limit || 0;
     this.seed = (opt.seed != null ? opt.seed : Math.random() * 2147483647) >>> 0;
     this.stars = makeStars();
-    this.touch = null; this.tx = W / 2; this.hint = IS_TOUCH ? 7 : 0;
+    this.touch = null; this.tx = WW / 2; this.hint = IS_TOUCH ? 7 : 0;
     this.bindTouch();
     this.reset();
   }
   /* Gestos: arrastar = mover · toque rápido = girar · deslizar p/ baixo (segurando) = cair rápido */
   bindTouch() {
     const cv = this.cv;
-    const toL = dx => dx * W / Math.max(1, cv.getBoundingClientRect().width);
+    const toL = dx => dx * WW / Math.max(1, cv.getBoundingClientRect().width);
     cv.addEventListener('pointerdown', e => {
       if (this.touch || Game.paused || Game.over) return;
       e.preventDefault();
       try { cv.setPointerCapture(e.pointerId); } catch (_) {}
       this.touch = { id: e.pointerId, sx: e.clientX, sy: e.clientY, lx: e.clientX, t0: performance.now(), moved: false, down: false, mode: null };
-      this.tx = this.cur ? this.cur.position.x : W / 2; this.hint = 0;
+      this.tx = this.cur ? this.cur.position.x : WW / 2; this.hint = 0;
     });
     cv.addEventListener('pointermove', e => {
       const t = this.touch; if (!t || t.id !== e.pointerId) return;
@@ -466,7 +469,7 @@ class Arena {
         t.mode = (dy > Math.abs(dx) * 1.6) ? 'drop' : 'drag';
         t.moved = true; t.lx = e.clientX;
       }
-      if (t.mode === 'drag') { this.tx = clamp(this.tx + toL(e.clientX - t.lx) * DRAG_GAIN, S, W - S); t.lx = e.clientX; }
+      if (t.mode === 'drag') { this.tx = clamp(this.tx + toL(e.clientX - t.lx) * DRAG_GAIN, S, WW - S); t.lx = e.clientX; }
       else if (t.mode === 'drop') t.down = true;
     });
     const end = e => {
@@ -480,7 +483,7 @@ class Arena {
     this.engine = Engine.create({ gravity: { x: 0, y: 1 } });
     this.engine.positionIterations = 10; this.engine.velocityIterations = 8;
     this.world = this.engine.world;
-    this.base = Bodies.rectangle(W / 2, BASE_Y + 15, BASE_W, 30, { isStatic: true, friction: FRICTION, frictionStatic: FRICTION_STATIC, restitution: 0, label: 'base' });
+    this.base = Bodies.rectangle(WW / 2, BASE_Y + 15, BASE_W, 30, { isStatic: true, friction: FRICTION, frictionStatic: FRICTION_STATIC, restitution: 0, label: 'base' });
     Composite.add(this.world, this.base);
     this.rb = mulberry32(this.seed ^ 0x9e3779b9); this.rc = mulberry32(this.seed ^ 0x85ebca6b); this.re = mulberry32(this.seed ^ 0xc2b2ae35);
     this.placed = []; this.cur = null; this.bag = []; this.coinsField = []; this.pops = [];
@@ -511,13 +514,13 @@ class Arena {
     const type = this.next; this.next = this.draw7();
     // opções novas a cada quadradinho (o Matter apaga "chamfer" do objeto) e atrito definido em cada parte E no corpo
     const parts = SHAPES[type].map(([cx, cy]) => Bodies.rectangle(cx * S, cy * S, S, S, { friction: FRICTION, frictionStatic: FRICTION_STATIC, restitution: 0, density: .002}));
-    const body = Body.create({ parts, friction: FRICTION, frictionStatic: FRICTION_STATIC, restitution: 0, frictionAir: .012, density: .002 });
+    const body = Body.create({ parts, friction: FRICTION, frictionStatic: FRICTION_STATIC, restitution: 0, frictionAir: .02, density: .002 });
     body.torre = { type, locked: false };
-    Body.setPosition(body, { x: W / 2, y: this.camY + 185 });
-    this.tx = W / 2;
+    Body.setPosition(body, { x: WW / 2, y: this.camY + 185 / ZOOM });
+    this.tx = WW / 2;
     Composite.add(this.world, body);
     this.cur = body;
-    if (this.coinsField.length < 2 && this.rc() < .55) this.coinsField.push({ x: 120 + this.rc() * 160, y: this.camY + 250 + this.rc() * 100, t: this.rc() * 6 });
+    if (this.coinsField.length < 2 && this.rc() < .55) this.coinsField.push({ x: WW * .3 + this.rc() * WW * .4, y: this.camY + 250 / ZOOM + this.rc() * 100 / ZOOM, t: this.rc() * 6 });
   }
   rotate() {
     if (!this.cur || this.cur.torre.locked || this.state() !== 'play') return;
@@ -584,7 +587,7 @@ class Arena {
       Body.setAngularVelocity(this.cur, 0);
       const bd = this.cur.bounds;
       if (bd.min.x < 4) Body.translate(this.cur, { x: 4 - bd.min.x, y: 0 });
-      if (bd.max.x > W - 4) Body.translate(this.cur, { x: W - 4 - bd.max.x, y: 0 });
+      if (bd.max.x > WW - 4) Body.translate(this.cur, { x: WW - 4 - bd.max.x, y: 0 });
       // moedas
       for (const k of this.coinsField) {
         if (k.x > bd.min.x - 9 && k.x < bd.max.x + 9 && k.y > bd.min.y - 9 && k.y < bd.max.y + 9) {
@@ -592,7 +595,7 @@ class Arena {
         }
       }
       this.coinsField = this.coinsField.filter(k => !k.got);
-      if (this.cur.position.y > BASE_Y + 450) this.loseCur();
+      if (this.cur.position.y > BASE_Y + 600) this.loseCur();
     }
     Engine.update(this.engine, 1000 / 60);
     // trava de segurança: nenhuma peça pousada pode "disparar" nem girar rápido demais
@@ -602,10 +605,12 @@ class Arena {
       if (b.speed > 14) { const k = 14 / b.speed; Body.setVelocity(b, { x: b.velocity.x * k, y: b.velocity.y * k }); }
       if (Math.abs(b.angularVelocity || 0) > .2) Body.setAngularVelocity(b, Math.sign(b.angularVelocity) * .2);
     }
+    // blocos antigos viram chão firme: só os últimos KEEP_LIVE continuam com física
+    for (let i = 0; i < this.placed.length - KEEP_LIVE; i++) { const b = this.placed[i]; if (!b.isStatic && b.speed < 1) Body.setStatic(b, true); }
     // peças caídas e altura da torre
     let top = BASE_Y, wob = 0;
     for (const b of this.placed.slice()) {
-      if (b.position.y > BASE_Y + 450) {
+      if (b.position.y > BASE_Y + 600) {
         Composite.remove(this.world, b); this.placed.splice(this.placed.indexOf(b), 1);
         this.lives--; this.setMood('sad', 1.2); sfx.lose(); this.pop('Caiu!', '#ff8fab'); continue;
       }
@@ -622,7 +627,7 @@ class Arena {
       this.record = Math.floor(this.height / 100) * 100; addCoins(5); this.earned += 5; sfx.rec(); this.setMood('happy', 1); this.pop('Novo recorde! +5', '#9be59f');
     }
     this.coinsField = this.coinsField.filter(k => k.y < BASE_Y - this.height + 10);
-    this.camY += (Math.min(CAM0, BASE_Y - this.height - H * .47) - this.camY) * .05;
+    this.camY += (Math.min(CAM0, BASE_Y - this.height - WH * .47) - this.camY) * .05;
     if (!this.cur) {
       this.spawnIn -= dt;
       if (this.spawnIn <= 0 && this.lives > 0) {
@@ -662,7 +667,7 @@ class Arena {
     drawVillain(c, x, y, sc, this.t, charge);
     const tipX = x, tipY = y + 28 * sc;
     if (t > 1.45 && t < 1.95 && this.cur) {
-      const p = (t - 1.45) / .5, tx = this.cur.position.x, ty = this.cur.position.y - this.camY;
+      const p = (t - 1.45) / .5, tx = this.cur.position.x * ZOOM, ty = (this.cur.position.y - this.camY) * ZOOM;
       const px = tipX + (tx - tipX) * p, py = tipY + (ty - tipY) * p;
       const g = c.createRadialGradient(px, py, 1, px, py, 16); g.addColorStop(0, 'rgba(255,255,230,1)'); g.addColorStop(.5, 'rgba(255,225,90,.85)'); g.addColorStop(1, 'rgba(255,190,40,0)');
       c.fillStyle = g; c.beginPath(); c.arc(px, py, 16, 0, 7); c.fill();
@@ -671,13 +676,13 @@ class Arena {
 
 
   drawCheckpoint(c) {
-    const y = BASE_Y - this.cpLevel, n = 18, d = W / n;
+    const y = BASE_Y - this.cpLevel, d = 28, n = Math.ceil(WW / d);
     c.save();
     const near = clamp(1 - (this.cpLevel - this.height) / 120, 0, 1);
     c.shadowColor = '#bff3ff'; c.shadowBlur = 8 + near * 14;
     c.fillStyle = 'rgba(190,245,255,' + (.5 + near * .4) + ')'; c.strokeStyle = 'rgba(255,255,255,.7)'; c.lineWidth = 1;
     for (let i = 0; i < n; i++) { const x = d * (i + .5); c.beginPath(); c.moveTo(x, y - d * .5); c.lineTo(x + d * .5, y); c.lineTo(x, y + d * .5); c.lineTo(x - d * .5, y); c.closePath(); c.fill(); c.stroke(); }
-    c.shadowBlur = 0; c.fillStyle = '#e9fbff'; c.font = '700 13px Outfit, Inter, system-ui, sans-serif'; c.textAlign = 'left'; c.fillText('PAVIMENTO', 10, y - d * .5 - 6);
+    c.shadowBlur = 0; c.fillStyle = '#e9fbff'; c.font = '700 24px Outfit, Inter, system-ui, sans-serif'; c.textAlign = 'left'; c.fillText('PAVIMENTO', 14, y - d * .5 - 10);
     c.restore();
   }
 
@@ -685,9 +690,9 @@ class Arena {
   render() {
     const c = this.ctx, L = this.look();
     c.setTransform(DPR, 0, 0, DPR, 0, 0);
-    drawSky(c, THEMES[L.theme] || THEMES.noite, this.height, this.t, this.stars, this.camY);
-    c.save(); c.translate(0, -this.camY);
-    drawBase(c, L.base, this.t);
+    drawSky(c, THEMES[L.theme] || THEMES.noite, this.height * ZOOM, this.t, this.stars, this.camY * ZOOM);
+    c.save(); c.scale(ZOOM, ZOOM); c.translate(0, -this.camY);
+    drawBase(c, L.base, this.t, WW / 2);
     if (this.goal) {
       const gy = BASE_Y - GOAL;
       c.strokeStyle = 'rgba(255,230,120,.9)'; c.lineWidth = 3; c.setLineDash([14, 10]); c.beginPath(); c.moveTo(0, gy); c.lineTo(W, gy); c.stroke(); c.setLineDash([]);
@@ -707,7 +712,7 @@ class Arena {
         if (b.isStatic || (b === this.cur && this.cement)) {
           c.save(); c.beginPath(); p.vertices.forEach((v, i) => i ? c.lineTo(v.x, v.y) : c.moveTo(v.x, v.y)); c.closePath();
           if (b.isStatic) { c.fillStyle = 'rgba(225,232,245,.2)'; c.fill(); }
-          else { c.shadowColor = '#ffffff'; c.shadowBlur = 14; c.strokeStyle = 'rgba(255,255,255,.95)'; c.lineWidth = 3; c.stroke(); }
+          else { c.shadowColor = '#ffffff'; c.shadowBlur = 24; c.strokeStyle = 'rgba(255,255,255,.95)'; c.lineWidth = 5; c.stroke(); }
           c.restore();
         }
       }
