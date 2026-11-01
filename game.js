@@ -11,17 +11,21 @@ const { Engine, Bodies, Body, Composite, Events } = Matter;
 try { document.fonts.load('600 16px Outfit'); document.fonts.load('700 32px "Cormorant Garamond"'); } catch (e) {}
 
 /* ====== AJUSTES FÁCEIS (mexa aqui para mudar a dificuldade) ====== */
-const W = 400, H = 700;        // tamanho lógico de cada arena
-const S = 30;                  // tamanho de cada quadradinho do bloco
+const W = 400; let H = 700, CAM0 = 0;   // tamanho lógico da arena (a altura H se adapta à tela do celular)
+const S = 40;                  // tamanho de cada quadradinho do bloco (maior = blocos maiores)
 const BASE_Y = 560;            // altura da superfície da ilha
-const BASE_W = 200;            // largura da ilha
+const BASE_W = 230;            // largura da ilha
+const CP_FIRST = 330;          // altura (px) da 1ª linha de pavimento; ~50 px = 1 m
+const CP_STEP = 330;           // distância até a próxima linha depois de pavimentar
+const TOOLS_START = 3;         // usos da colher de pedreiro (cimento) no início
+function fitWorld() { const vw = Math.min(innerWidth, innerHeight * .62); H = Math.max(640, Math.min(940, Math.round(W * innerHeight / Math.max(1, vw)))); CAM0 = BASE_Y + 150 - H; }
 const GOAL = 600;              // altura da meta no modo 2 jogadores
 const LIVES = 3;               // blocos que podem cair antes de perder
 const FALL = 1.0;              // velocidade normal de queda (menor = mais devagar)
 const FALL_FAST = 6;           // velocidade ao segurar "descer"
 const MOVE = 3;                // velocidade lateral no teclado
 const DRAG_GAIN = 0.85;        // touch: 1 = a peça acompanha o dedo exatamente; menor = menos sensível
-const MOVE_MAX = 5;            // touch: velocidade lateral máxima da peça (menor = mais firme)
+const MOVE_MAX = 6;            // touch: velocidade lateral máxima da peça (menor = mais firme)
 const DEADZONE = 8;            // touch: pixels que o dedo precisa andar antes de contar como arrasto
 const FRICTION = 1;            // atrito entre blocos (mais alto = menos escorrega)
 const FRICTION_STATIC = 10;    // atrito parado (alto = o bloco "gruda" onde pousou)
@@ -397,27 +401,34 @@ function mulberry32(a) {
   return function () { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
 }
 
-/* ====== VILÃO (original): o Bruxo Sombrio ====== */
+/* ====== VILÃO (original): a Nuvem de Tempestade ====== */
 function drawVillain(c, x, y, sc, t, charge) {
-  const bob = Math.sin(t * 4) * 3;
-  c.save(); c.translate(x, y + bob); c.scale(-sc, sc); c.lineJoin = 'round'; c.lineCap = 'round';
-  c.fillStyle = 'rgba(0,0,0,.28)'; c.beginPath(); c.ellipse(0, 12 - bob / sc, 22, 5, 0, 0, 7); c.fill();
-  c.strokeStyle = '#1d1238'; c.lineWidth = 3.4; c.beginPath(); c.moveTo(16, -20); c.lineTo(36, -46); c.stroke();
-  c.strokeStyle = '#8a5a34'; c.lineWidth = 3; c.beginPath(); c.moveTo(34, -44); c.lineTo(44, -58); c.stroke();
-  c.fillStyle = '#3b2569'; c.strokeStyle = '#1d1238'; c.lineWidth = 2;
-  c.beginPath(); c.moveTo(-26, 8); c.quadraticCurveTo(-26, -34, -12, -44); c.lineTo(12, -44); c.quadraticCurveTo(26, -34, 26, 8);
-  c.quadraticCurveTo(18, 2, 13, 10); c.quadraticCurveTo(6, 2, 0, 10); c.quadraticCurveTo(-6, 2, -13, 10); c.quadraticCurveTo(-18, 2, -26, 8); c.closePath(); c.fill(); c.stroke();
-  c.fillStyle = '#110a24'; c.beginPath(); c.ellipse(0, -34, 14, 12, 0, 0, 7); c.fill();
-  c.save(); c.shadowColor = '#ffe34d'; c.shadowBlur = 9; c.fillStyle = '#ffe34d';
-  c.beginPath(); c.ellipse(-5.5, -35, 3.6, 2.3, .4, 0, 7); c.ellipse(5.5, -35, 3.6, 2.3, -.4, 0, 7); c.fill(); c.restore();
-  c.strokeStyle = '#ffe34d'; c.lineWidth = 1.6; c.beginPath(); c.arc(0, -31, 5, .15 * Math.PI, .85 * Math.PI); c.stroke();
-  c.fillStyle = '#2a1a52'; c.strokeStyle = '#1d1238'; c.lineWidth = 2;
-  c.beginPath(); c.moveTo(-17, -44); c.quadraticCurveTo(-8, -62, 2, -70); c.quadraticCurveTo(10, -82, 19, -79); c.quadraticCurveTo(10, -66, 17, -44); c.closePath(); c.fill(); c.stroke();
-  c.fillStyle = '#1f1342'; c.beginPath(); c.ellipse(0, -44, 25, 6, 0, 0, 7); c.fill(); c.stroke();
-  c.fillStyle = '#e0a82e'; c.beginPath(); c.ellipse(0, -46, 15, 3.4, 0, 0, 7); c.fill();
-  const r = 4 + charge * 9, og = c.createRadialGradient(44, -60, 1, 44, -60, r * 2.2);
-  og.addColorStop(0, 'rgba(255,235,255,.95)'); og.addColorStop(.35, 'rgba(205,115,255,.85)'); og.addColorStop(1, 'rgba(120,40,200,0)');
-  c.fillStyle = og; c.beginPath(); c.arc(44, -60, r * 2.2, 0, 7); c.fill();
+  const bob = Math.sin(t * 3) * 3;
+  c.save(); c.translate(x, y + bob); c.scale(sc, sc); c.lineJoin = 'round'; c.lineCap = 'round';
+  // chuva
+  c.strokeStyle = 'rgba(170,205,255,' + (.35 + charge * .4) + ')'; c.lineWidth = 2;
+  for (let i = 0; i < 9; i++) {
+    const rx = -34 + i * 8.5, ph = (t * 2.2 + i * .37) % 1;
+    c.beginPath(); c.moveTo(rx, 20 + ph * 56); c.lineTo(rx - 3, 30 + ph * 56); c.stroke();
+  }
+  // corpo da nuvem (cinza-azulado escuro)
+  const puffs = [[-30, 4, 19], [-12, -10, 25], [12, -12, 26], [31, 3, 20], [0, 8, 24]];
+  c.fillStyle = '#3d4a6b'; c.strokeStyle = '#1c2540'; c.lineWidth = 2.4;
+  c.beginPath(); for (const p of puffs) { c.moveTo(p[0] + p[2], p[1]); c.arc(p[0], p[1], p[2], 0, 7); } c.fill();
+  c.fillStyle = '#566590';
+  c.beginPath(); c.arc(-10, -16, 11, Math.PI, Math.PI * 1.75); c.arc(14, -18, 12, Math.PI * 1.1, Math.PI * 1.7); c.lineWidth = 0; c.fill();
+  // barriga mais escura
+  c.fillStyle = 'rgba(20,28,56,.45)'; c.beginPath(); c.ellipse(0, 16, 34, 8, 0, 0, 7); c.fill();
+  // carinha zangada
+  c.fillStyle = '#f4f7ff'; c.beginPath(); c.ellipse(-9, 0, 4.4, 5, 0, 0, 7); c.ellipse(9, 0, 4.4, 5, 0, 0, 7); c.fill();
+  c.fillStyle = '#10162e'; c.beginPath(); c.arc(-8, 1, 2.2, 0, 7); c.arc(10, 1, 2.2, 0, 7); c.fill();
+  c.strokeStyle = '#10162e'; c.lineWidth = 2.6;
+  c.beginPath(); c.moveTo(-16, -8); c.lineTo(-4, -4); c.moveTo(16, -8); c.lineTo(4, -4); c.stroke();
+  c.beginPath(); c.arc(0, 14, 5, Math.PI * 1.15, Math.PI * 1.85); c.stroke();
+  // raio carregando
+  const g = c.createRadialGradient(0, 28, 1, 0, 28, 8 + charge * 24);
+  g.addColorStop(0, 'rgba(255,248,170,' + (.4 + charge * .6) + ')'); g.addColorStop(1, 'rgba(255,230,90,0)');
+  c.fillStyle = g; c.beginPath(); c.arc(0, 28, 8 + charge * 24, 0, 7); c.fill();
   c.restore();
 }
 
@@ -475,7 +486,7 @@ class Arena {
     this.placed = []; this.cur = null; this.bag = []; this.coinsField = []; this.pops = [];
     this.next = this.draw7();
     this.lives = LIVES; this.height = 0; this.record = 0; this.earned = 0;
-    this.camY = 0; this.t = 0; this.spawnIn = .5; this.wobble = 0;
+    this.camY = CAM0; this.t = 0; this.cpLevel = CP_FIRST; this.cpFlash = 0; this.tools = TOOLS_START; this.cement = false; this.calm = true; this.spawnIn = .5; this.wobble = 0;
     this.mood = 'idle'; this.moodT = 0; this.windAmt = 0; this.evt = null; this.evtIn = EVT_FIRST + this.re() * 4; this.fastLeft = 0; this.flash = 0; this.streaks = [];
     this.spawned = 0; this.endIn = null; this.finished = false;
     Events.on(this.engine, 'collisionStart', e => {
@@ -499,14 +510,14 @@ class Arena {
     this.spawned++;
     const type = this.next; this.next = this.draw7();
     // opções novas a cada quadradinho (o Matter apaga "chamfer" do objeto) e atrito definido em cada parte E no corpo
-    const parts = SHAPES[type].map(([cx, cy]) => Bodies.rectangle(cx * S, cy * S, S, S, { friction: FRICTION, frictionStatic: FRICTION_STATIC, restitution: 0, density: .002, chamfer: { radius: 2 } }));
+    const parts = SHAPES[type].map(([cx, cy]) => Bodies.rectangle(cx * S, cy * S, S, S, { friction: FRICTION, frictionStatic: FRICTION_STATIC, restitution: 0, density: .002}));
     const body = Body.create({ parts, friction: FRICTION, frictionStatic: FRICTION_STATIC, restitution: 0, frictionAir: .012, density: .002 });
     body.torre = { type, locked: false };
-    Body.setPosition(body, { x: W / 2, y: this.camY + 105 });
+    Body.setPosition(body, { x: W / 2, y: this.camY + 185 });
     this.tx = W / 2;
     Composite.add(this.world, body);
     this.cur = body;
-    if (this.coinsField.length < 2 && this.rc() < .55) this.coinsField.push({ x: 120 + this.rc() * 160, y: this.camY + 190 + this.rc() * 100, t: this.rc() * 6 });
+    if (this.coinsField.length < 2 && this.rc() < .55) this.coinsField.push({ x: 120 + this.rc() * 160, y: this.camY + 250 + this.rc() * 100, t: this.rc() * 6 });
   }
   rotate() {
     if (!this.cur || this.cur.torre.locked || this.state() !== 'play') return;
@@ -523,10 +534,26 @@ class Arena {
   lockCur() {
     const b = this.cur; b.torre.locked = true; this.placed.push(b); this.cur = null;
     // tira a velocidade lateral/giro herdada do controle: a peça pousa e fica, sem deslizar
-    Body.setVelocity(b, { x: 0, y: Math.min(b.velocity.y, 1) });
+    Body.setVelocity(b, { x: 0, y: 0 });
     Body.setAngularVelocity(b, 0);
+    if (this.cement) { this.cement = false; Body.setStatic(b, true); this.pop('Cimentado!', '#cfd8e8'); }
     this.spawnIn = .6; this.setMood('happy', .7); sfx.land();
     SAVE.blocks++; addCoins(1); this.earned += 1;
+  }
+  /* linha de pavimento: ao alcançá-la, a torre vira chão firme (blocos fixos) e a próxima linha sobe */
+  pave() {
+    for (const b of this.placed) if (!b.isStatic) Body.setStatic(b, true);
+    this.cpLevel = this.height + CP_STEP; this.cpFlash = 1; this.tools++;
+    if (this.lives < LIVES) this.lives++;
+    addCoins(10); this.earned += 10; sfx.rec(); this.setMood('happy', 1.2);
+    this.pop('Pavimentado! +10', '#bff3ff'); this.pop('+1 cimento', '#cfd8e8');
+  }
+  useTool() {
+    if (!this.cur || this.cur.torre.locked || this.state() !== 'play') return;
+    if (this.cement) { this.cement = false; this.tools++; return; }
+    if (this.tools <= 0) { this.pop('Sem cimento', '#ff8fab'); return; }
+    this.tools--; this.cement = true; beep(380, .08, 'triangle', .03);
+    this.pop('Cimento pronto!', '#cfd8e8');
   }
   loseCur() {
     if (this.cur) { Composite.remove(this.world, this.cur); this.cur = null; }
@@ -544,7 +571,7 @@ class Arena {
     else this.runEvent(dt);
     if (this.fastLeft > 0) this.fastLeft -= dt;
     if (this.flash > 0) this.flash -= dt;
-    if (this.windAmt) for (const b of this.placed) Body.applyForce(b, b.position, { x: this.windAmt * WIND_FORCE * b.mass, y: 0 });
+    if (this.windAmt) for (const b of this.placed) if (!b.isStatic) Body.applyForce(b, b.position, { x: this.windAmt * WIND_FORCE * b.mass, y: 0 });
     this.streaks = this.streaks.filter(q => { q.x += q.sp * 60 * dt; return q.x > -140 && q.x < W + 140; });
     // peça atual
     if (this.cur && !this.cur.torre.locked) {
@@ -570,6 +597,8 @@ class Arena {
     Engine.update(this.engine, 1000 / 60);
     // trava de segurança: nenhuma peça pousada pode "disparar" nem girar rápido demais
     for (const b of this.placed) {
+      // "assentar": movimento minúsculo (tremedeira do motor) vira repouso total, a não ser que o vento esteja soprando
+      if (!this.windAmt && b.speed < .15 && Math.abs(b.angularSpeed || 0) < .003) { Body.setVelocity(b, { x: 0, y: 0 }); Body.setAngularVelocity(b, 0); continue; }
       if (b.speed > 14) { const k = 14 / b.speed; Body.setVelocity(b, { x: b.velocity.x * k, y: b.velocity.y * k }); }
       if (Math.abs(b.angularVelocity || 0) > .2) Body.setAngularVelocity(b, Math.sign(b.angularVelocity) * .2);
     }
@@ -584,13 +613,16 @@ class Arena {
       if (b.speed < .6 && b.position.y < BASE_Y + 50) top = Math.min(top, b.bounds.min.y);
     }
     this.height = Math.max(0, BASE_Y - top);
+    this.calm = this.placed.every(b => b.isStatic || b.speed < 1);
+    if (this.cpFlash > 0) this.cpFlash -= dt;
+    if (this.height >= this.cpLevel && this.calm && this.cur) this.pave();
     this.wobble += (wob - this.wobble) * .08;
     if (this.mood === 'idle' && this.wobble > 4 && this.placed.length > 2) this.setMood('scared', .3);
     if (this.height >= this.record + 100) {
       this.record = Math.floor(this.height / 100) * 100; addCoins(5); this.earned += 5; sfx.rec(); this.setMood('happy', 1); this.pop('Novo recorde! +5', '#9be59f');
     }
     this.coinsField = this.coinsField.filter(k => k.y < BASE_Y - this.height + 10);
-    this.camY += (Math.min(0, BASE_Y - this.height - 330) - this.camY) * .05;
+    this.camY += (Math.min(CAM0, BASE_Y - this.height - H * .47) - this.camY) * .05;
     if (!this.cur) {
       this.spawnIn -= dt;
       if (this.spawnIn <= 0 && this.lives > 0) {
@@ -614,7 +646,7 @@ class Arena {
         if (Math.random() < .7) this.streaks.push({ x: e.dir > 0 ? -30 : W + 30, y: 70 + Math.random() * (H - 140), len: 40 + Math.random() * 60, sp: e.dir * (7 + Math.random() * 6) });
       } else this.endEvent();
     } else {
-      if (e.t > 1.7 && !e.fired) { e.fired = true; this.fastLeft = SPELL_TIME; this.flash = .7; this.pop('Feitiço! Peças mais rápidas', '#d9a8ff'); sfx.spell(); }
+      if (e.t > 1.7 && !e.fired) { e.fired = true; this.fastLeft = SPELL_TIME; this.flash = .7; this.pop('Tempestade! Peças mais rápidas', '#ffe27a'); sfx.spell(); }
       if (e.t > 2.8) this.endEvent();
     }
   }
@@ -622,21 +654,32 @@ class Arena {
   drawEvent(c) {
     const e = this.evt; if (!e || e.kind !== 'spell') return;
     const t = e.t, ease = k => 1 - Math.pow(1 - clamp(k, 0, 1), 3);
-    let x = W + 70;
-    if (t < .8) x = W + 70 - (W + 70 - (W - 62)) * ease(t / .8);
-    else if (t < 2) x = W - 62;
-    else x = W - 62 + 140 * clamp((t - 2) / .8, 0, 1);
-    const y = 205, sc = 1.05, charge = clamp((t - .8) / .9, 0, 1) * (t < 1.8 ? 1 : 1.4);
+    let x = W + 90;
+    if (t < .8) x = W + 90 - (W + 90 - (W - 66)) * ease(t / .8);
+    else if (t < 2) x = W - 66;
+    else x = W - 66 + 160 * clamp((t - 2) / .8, 0, 1);
+    const y = 300, sc = 1.45, charge = clamp((t - .8) / .9, 0, 1) * (t < 1.8 ? 1 : 1.4);
     drawVillain(c, x, y, sc, this.t, charge);
-    const tipX = x - 44 * sc, tipY = y - 60 * sc;
+    const tipX = x, tipY = y + 28 * sc;
     if (t > 1.45 && t < 1.95 && this.cur) {
       const p = (t - 1.45) / .5, tx = this.cur.position.x, ty = this.cur.position.y - this.camY;
       const px = tipX + (tx - tipX) * p, py = tipY + (ty - tipY) * p;
-      const g = c.createRadialGradient(px, py, 1, px, py, 16); g.addColorStop(0, 'rgba(255,230,255,1)'); g.addColorStop(.5, 'rgba(190,100,255,.8)'); g.addColorStop(1, 'rgba(120,40,200,0)');
+      const g = c.createRadialGradient(px, py, 1, px, py, 16); g.addColorStop(0, 'rgba(255,255,230,1)'); g.addColorStop(.5, 'rgba(255,225,90,.85)'); g.addColorStop(1, 'rgba(255,190,40,0)');
       c.fillStyle = g; c.beginPath(); c.arc(px, py, 16, 0, 7); c.fill();
     }
   }
 
+
+  drawCheckpoint(c) {
+    const y = BASE_Y - this.cpLevel, n = 18, d = W / n;
+    c.save();
+    const near = clamp(1 - (this.cpLevel - this.height) / 120, 0, 1);
+    c.shadowColor = '#bff3ff'; c.shadowBlur = 8 + near * 14;
+    c.fillStyle = 'rgba(190,245,255,' + (.5 + near * .4) + ')'; c.strokeStyle = 'rgba(255,255,255,.7)'; c.lineWidth = 1;
+    for (let i = 0; i < n; i++) { const x = d * (i + .5); c.beginPath(); c.moveTo(x, y - d * .5); c.lineTo(x + d * .5, y); c.lineTo(x, y + d * .5); c.lineTo(x - d * .5, y); c.closePath(); c.fill(); c.stroke(); }
+    c.shadowBlur = 0; c.fillStyle = '#e9fbff'; c.font = '700 13px Outfit, Inter, system-ui, sans-serif'; c.textAlign = 'left'; c.fillText('PAVIMENTO', 10, y - d * .5 - 6);
+    c.restore();
+  }
 
   /* --- desenho --- */
   render() {
@@ -650,6 +693,7 @@ class Arena {
       c.strokeStyle = 'rgba(255,230,120,.9)'; c.lineWidth = 3; c.setLineDash([14, 10]); c.beginPath(); c.moveTo(0, gy); c.lineTo(W, gy); c.stroke(); c.setLineDash([]);
       c.fillStyle = '#ffd166'; c.font = '600 16px Outfit, Inter, system-ui, sans-serif'; c.textAlign = 'left'; c.fillText('★ META', 12, gy + 22);
     }
+    this.drawCheckpoint(c);
     for (const k of this.coinsField) {
       const yy = k.y + Math.sin(this.t * 3 + k.t) * 4, sc = Math.abs(Math.cos(this.t * 2.5 + k.t));
       c.save(); c.shadowColor = '#ffd166'; c.shadowBlur = 10; c.fillStyle = '#ffc300'; c.strokeStyle = '#a86b00'; c.lineWidth = 2;
@@ -658,12 +702,21 @@ class Arena {
     const all = this.cur ? this.placed.concat([this.cur]) : this.placed;
     for (const b of all) {
       const ps = b.parts.length > 1 ? b.parts.slice(1) : b.parts;
-      for (const p of ps) drawPart(c, p, b.torre.type, L.blocks, this.t);
+      for (const p of ps) {
+        drawPart(c, p, b.torre.type, L.blocks, this.t);
+        if (b.isStatic || (b === this.cur && this.cement)) {
+          c.save(); c.beginPath(); p.vertices.forEach((v, i) => i ? c.lineTo(v.x, v.y) : c.moveTo(v.x, v.y)); c.closePath();
+          if (b.isStatic) { c.fillStyle = 'rgba(225,232,245,.2)'; c.fill(); }
+          else { c.shadowColor = '#ffffff'; c.shadowBlur = 14; c.strokeStyle = 'rgba(255,255,255,.95)'; c.lineWidth = 3; c.stroke(); }
+          c.restore();
+        }
+      }
     }
     c.restore();
     c.lineCap = 'round'; c.lineWidth = 2;
     for (const q of this.streaks) { c.strokeStyle = 'rgba(225,248,242,.3)'; c.beginPath(); c.moveTo(q.x, q.y); c.lineTo(q.x - Math.sign(q.sp) * q.len, q.y + 3); c.stroke(); }
     if (this.fastLeft > 0 || this.flash > 0) { c.fillStyle = 'rgba(130,60,210,' + (.08 + .04 * Math.sin(this.t * 8) + Math.max(0, this.flash) * .25) + ')'; c.fillRect(0, 0, W, H); }
+    if (this.cpFlash > 0) { c.fillStyle = 'rgba(200,245,255,' + this.cpFlash * .35 + ')'; c.fillRect(0, 0, W, H); }
     this.drawEvent(c);
     this.drawHud(c, L);
   }
@@ -671,9 +724,9 @@ class Arena {
     const hb = c.createLinearGradient(0, 0, 0, 110); hb.addColorStop(0, 'rgba(0,10,20,.55)'); hb.addColorStop(1, 'rgba(0,10,20,0)');
     c.fillStyle = hb; c.fillRect(0, 0, W, 110);
     // mascote em uma pedrinha, sempre visível
-    c.save(); c.fillStyle = 'rgba(30,70,60,.85)'; c.beginPath(); c.ellipse(52, 664, 40, 9, 0, 0, 7); c.fill();
-    c.beginPath(); c.moveTo(18, 666); c.lineTo(86, 666); c.lineTo(62, 690); c.lineTo(40, 684); c.closePath(); c.fill(); c.restore();
-    drawMascot(c, 52, 664, 1.05, L.mascot, L.hat, this.lives <= 0 ? 'sad' : this.mood, this.t);
+    c.save(); c.fillStyle = 'rgba(30,70,60,.85)'; c.beginPath(); c.ellipse(52, H - 36, 40, 9, 0, 0, 7); c.fill();
+    c.beginPath(); c.moveTo(18, H - 34); c.lineTo(86, H - 34); c.lineTo(62, H - 10); c.lineTo(40, H - 16); c.closePath(); c.fill(); c.restore();
+    drawMascot(c, 52, H - 36, 1.05, L.mascot, L.hat, this.lives <= 0 ? 'sad' : this.mood, this.t);
     // vidas
     for (let i = 0; i < LIVES; i++) {
       c.save(); c.translate(26 + i * 28, 28); c.fillStyle = i < this.lives ? '#ff6b8a' : 'rgba(255,255,255,.15)'; c.strokeStyle = 'rgba(0,0,0,.35)'; c.lineWidth = 1.5;
@@ -703,7 +756,7 @@ class Arena {
     if (this.fastLeft > 0) {
       c.fillStyle = 'rgba(0,0,0,.4)'; c.beginPath(); c.roundRect ? c.roundRect(W / 2 - 62, 90, 124, 9, 4.5) : c.rect(W / 2 - 62, 90, 124, 9); c.fill();
       c.fillStyle = '#c486ff'; c.beginPath(); c.roundRect ? c.roundRect(W / 2 - 62, 90, 124 * this.fastLeft / SPELL_TIME, 9, 4.5) : c.rect(W / 2 - 62, 90, 124 * this.fastLeft / SPELL_TIME, 9); c.fill();
-      c.fillStyle = '#e2c4ff'; c.font = '600 12px Outfit, Inter, system-ui, sans-serif'; c.textAlign = 'center'; c.fillText('FEITIÇO · peças rápidas', W / 2, 114);
+      c.fillStyle = '#e2c4ff'; c.font = '600 12px Outfit, Inter, system-ui, sans-serif'; c.textAlign = 'center'; c.fillText('TEMPESTADE · peças rápidas', W / 2, 114);
     }
     // avisos
     for (const p of this.pops) {
@@ -765,6 +818,7 @@ function startGame(mode, o = {}) {
   stopLoop(); keysDown.clear();
   Game.mode = mode; Game.over = false; Game.paused = false; Game.arenas = [];
   if (mode === 'solo') Game.duel = null;
+  fitWorld();
   const stage = $('stage'); stage.innerHTML = '';
   const cv = document.createElement('canvas'); cv.className = 'arena'; cv.width = W * DPR; cv.height = H * DPR; stage.appendChild(cv);
   Game.arenas.push(new Arena(cv, { ctrl: CTRL_SOLO, look: o.look || lookMine, name: o.name || '', seed: o.seed, limit: o.limit || 0 }));
@@ -774,10 +828,10 @@ function startGame(mode, o = {}) {
   Game.raf = requestAnimationFrame(loop);
 }
 function layout() {
-  const n = Math.max(1, Game.arenas.length), coarse = matchMedia('(pointer:coarse)').matches;
-  const availW = innerWidth - 16 * 2 - 14 * (n - 1), availH = innerHeight - 16 - (coarse ? 64 : 0);
-  const k = Math.max(.2, Math.min(availW / n / W, availH / H, 1.12));
+  const coarse = matchMedia('(pointer:coarse)').matches, pad = coarse ? 0 : 8;
+  const k = Math.max(.2, Math.min((innerWidth - pad * 2) / W, (innerHeight - pad * 2) / H, 1.7));
   for (const a of Game.arenas) { a.cv.style.width = (W * k) + 'px'; a.cv.style.height = (H * k) + 'px'; }
+  const tb = $('gTool'); if (tb) tb.classList.toggle('hidden', !Game.arenas.length);
 }
 window.addEventListener('resize', layout); window.addEventListener('orientationchange', () => setTimeout(layout, 200));
 function stopLoop() { Game.running = false; cancelAnimationFrame(Game.raf); }
@@ -789,6 +843,7 @@ function loop(now) {
     while (Game.acc >= 1 / 60) { for (const a of Game.arenas) a.update(1 / 60); Game.acc -= 1 / 60; checkEnd(); if (Game.over) break; }
   }
   for (const a of Game.arenas) a.render();
+  syncTool();
   Game.raf = requestAnimationFrame(loop);
 }
 function checkEnd() {
@@ -967,7 +1022,7 @@ window.addEventListener('keydown', e => {
   if (!$('game').classList.contains('hidden')) {
     if (BLOCK_KEYS.has(e.code)) e.preventDefault();
     if (e.code === 'KeyP' || e.code === 'Escape') { if (!e.repeat) setPause(!Game.paused); return; }
-    if (!e.repeat && !Game.paused && !Game.over) for (const a of Game.arenas) if (a.ctrl.rot.includes(e.code)) a.rotate();
+    if (!e.repeat && !Game.paused && !Game.over) for (const a of Game.arenas) { if (a.ctrl.rot.includes(e.code)) a.rotate(); if (e.code === 'KeyE' || e.code === 'KeyC') a.useTool(); }
   }
   keysDown.add(e.code);
 });
@@ -981,6 +1036,12 @@ $('btnDuelSend').onclick = duelSend;
 $('btnShop').onclick = () => openShopTab('mascot');
 document.querySelectorAll('#nav button').forEach(b => b.onclick = () => { stopLoop(); go(b.dataset.go); });
 $('gPause').onclick = () => setPause(!Game.paused);
+$('gTool').onclick = () => { const a = Game.arenas[0]; if (a && !Game.paused && !Game.over) a.useTool(); };
+function syncTool() {
+  const a = Game.arenas[0], b = $('gTool'); if (!a || !b) return;
+  const n = String(a.tools); if (b.dataset.n !== n) { b.dataset.n = n; $('gToolN').textContent = n; }
+  b.classList.toggle('armed', !!a.cement); b.classList.toggle('empty', a.tools <= 0 && !a.cement);
+}
 function toggleMute() { muted = !muted; document.body.classList.toggle('muted', muted); }
 $('btnMute').onclick = toggleMute; $('gMute').onclick = toggleMute;
 
