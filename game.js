@@ -750,11 +750,13 @@ class Arena {
   /* poder básico: elimina a última peça posicionada */
   undo() {
     if (this.state() !== 'play') return;
-    if (this.slides.length) { this.pop('Espere a torre parar', '#ffe08a'); return; }
     const b = this.placed[this.placed.length - 1];
     if (!b) { this.pop('Nada para desfazer', '#ffe08a'); return; }
     if (this.undos <= 0) { this.pop('Sem desfazer', '#ff8fab'); return; }
     this.undos--; Composite.remove(this.world, b); this.placed.pop();
+    for (const g of this.slides) g.members = g.members.filter(m => m !== b);   // vale também para a peça em queda
+    this.slides = this.slides.filter(g => g.members.length);
+    for (const m of this.placed) if (m.torre.sup) m.torre.sup = m.torre.sup.filter(x => x !== b);
     this.pop('Peça removida', '#bff3ff'); beep(300, .09, 'triangle', .03);
   }
   /* linha de pavimento: ao alcançá-la, a torre vira chão firme (blocos fixos) e a próxima linha sobe */
@@ -773,6 +775,8 @@ class Arena {
     this.tools--; this.cement = true; beep(380, .08, 'triangle', .03);
     this.pop('Cimento pronto!', '#cfd8e8');
   }
+  /* chão da queda: borda de baixo da tela (e não a base da torre) */
+  floorY() { return this.camY + WH + 25; }
   loseCur() {
     if (this.cur) { Composite.remove(this.world, this.cur); this.cur = null; }
     this.lives--; this.spawnIn = .9; this.setMood('sad', 1.2); sfx.lose(); this.pop('Caiu!', '#ff8fab');
@@ -802,7 +806,7 @@ class Arena {
       }
       this.coinsField = this.coinsField.filter(k => !k.got);
       this.stepCur();
-      if (this.cur && this.cur.position.y > BASE_Y + 600) this.loseCur();
+      if (this.cur && this.cur.position.y > this.floorY()) this.loseCur();
     }
     Engine.update(this.engine, 1000 / 60);
     for (let i = Math.max(0, this.placed.length - 4); i < this.placed.length; i++) { const t_ = this.placed[i].torre; if (t_.flash > 0) t_.flash = Math.max(0, t_.flash - dt * 3.5); }
@@ -810,7 +814,7 @@ class Arena {
     // peças caídas e altura da torre
     let top = BASE_Y, wob = 0;
     for (const b of this.placed.slice()) {
-      if (b.position.y > BASE_Y + 600) {
+      if (b.position.y > this.floorY()) {
         Composite.remove(this.world, b); this.placed.splice(this.placed.indexOf(b), 1);
         this.lives--; this.setMood('sad', 1.2); sfx.lose(); this.pop('Caiu!', '#ff8fab'); continue;
       }
