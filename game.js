@@ -11,7 +11,7 @@ const { Engine, Bodies, Body, Composite, Events } = Matter;
 try { document.fonts.load('600 16px Outfit'); document.fonts.load('700 32px "Cormorant Garamond"'); } catch (e) {}
 
 /* ====== AJUSTES FÁCEIS (mexa aqui para mudar a dificuldade) ====== */
-const ZOOM = 14 / 30;          // zoom da câmera. Medido no 99 Bricks: cada quadradinho = 3,5% da largura da tela (14 de 400)
+const ZOOM = .52;          // zoom da câmera. Medido no 99 Bricks: cada quadradinho = 3,5% da largura da tela (14 de 400)
 const W = 400, WW = W / ZOOM;  // W = largura da tela lógica; WW = largura do mundo da física
 let H = 700, WH = 1400, CAM0 = 0;   // tamanho lógico da arena (a altura H se adapta à tela do celular)
 const S = 30;                  // tamanho de cada quadradinho do bloco (maior = blocos maiores)
@@ -23,15 +23,19 @@ const WIND_PUSH = .8;          // vento empurra a peça que está caindo (px por
 const CP_FIRST = 330;          // altura (px) da 1ª linha de pavimento; ~50 px = 1 m
 const CP_STEP = 330;           // distância até a próxima linha depois de pavimentar
 const TOOLS_START = 3;         // usos da colher de pedreiro (cimento) no início
-function fitWorld() { const vw = Math.min(innerWidth, innerHeight * .62); H = Math.max(640, Math.min(940, Math.round(W * innerHeight / Math.max(1, vw)))); WH = H / ZOOM; CAM0 = BASE_Y + 150 / ZOOM - WH; }
+function fitWorld() { const vw = Math.min(innerWidth, innerHeight * .62); H = Math.max(640, Math.min(940, Math.round(W * innerHeight / Math.max(1, vw)))); WH = H / ZOOM; CAM0 = BASE_Y + GROUND_FROM_BOTTOM / ZOOM - WH; }
 const GOAL = 600;              // altura da meta no modo 2 jogadores
 const LIVES = 3;               // blocos que podem cair antes de perder
 const FALL = 1.3;              // velocidade normal de queda (menor = mais devagar)
 const FALL_FAST = 16;           // velocidade ao segurar "descer"
 const MOVE = 4;                // velocidade lateral no teclado
-const DRAG_GAIN = 1.0;         // touch: 1 = a peça acompanha o dedo exatamente; menor = menos sensível
+const DRAG_GAIN = .6;          // touch: 1 = a peça acompanha o dedo exatamente; menor = menos sensível
+const HYST = .4;               // touch: histerese da trava (maior = a peça só pula de casa depois de um arrasto mais claro)
+const GROUND_FROM_BOTTOM = 105; // distância da superfície da ilha até o fim da tela, no início (maior = ilha mais alta)
+const UNDO_START = 1;          // quantos "desfazer" o jogador começa tendo
+const UNDO_EVERY = 8;          // ganha +1 desfazer a cada N peças pousadas (e +1 a cada pavimento)
 const MOVE_MAX = 9;            // touch: velocidade lateral máxima da peça (menor = mais firme)
-const DEADZONE = 8;            // touch: pixels que o dedo precisa andar antes de contar como arrasto
+const DEADZONE = 12;           // touch: pixels que o dedo precisa andar antes de contar como arrasto
 const FRICTION = 1;            // atrito entre blocos (mais alto = menos escorrega)
 const FRICTION_STATIC = 10;    // atrito parado (alto = o bloco "gruda" onde pousou)
 const WIND_FORCE = 0.00005;    // força do vento sobre a torre (0 desliga). Leve de propósito.
@@ -472,7 +476,7 @@ class Arena {
       if (!t.moved) return;
       // movimento mais horizontal (ou para cima) zera a "âncora" de descida: arrastar de lado com a mão torta não faz a peça cair
       if (Math.abs(mx) > Math.abs(my) || my < 0) t.ay = e.clientY;
-      t.down = (e.clientY - t.ay) > DROP_PX;
+      if (!t.down) t.down = (e.clientY - t.ay) > DROP_PX;   // ao começar a descer, a posição fica travada até soltar o dedo
       if (!t.down) this.tx += toL(first ? e.clientX - t.sx : mx) * DRAG_GAIN;
     });
     const end = e => {
@@ -492,7 +496,7 @@ class Arena {
     this.placed = []; this.live = []; this.cur = null; this.bag = []; this.coinsField = []; this.pops = [];
     this.next = this.draw7();
     this.lives = LIVES; this.height = 0; this.record = 0; this.earned = 0;
-    this.camY = CAM0; this.t = 0; this.cpLevel = CP_FIRST; this.cpFlash = 0; this.tools = TOOLS_START; this.cement = false; this.calm = true; this.spawnIn = .5; this.wobble = 0;
+    this.camY = CAM0; this.t = 0; this.undos = UNDO_START; this.landed = 0; this.cpLevel = CP_FIRST; this.cpFlash = 0; this.tools = TOOLS_START; this.cement = false; this.calm = true; this.spawnIn = .5; this.wobble = 0;
     this.mood = 'idle'; this.moodT = 0; this.windAmt = 0; this.evt = null; this.evtIn = EVT_FIRST + this.re() * 4; this.fastLeft = 0; this.flash = 0; this.streaks = [];
     this.spawned = 0; this.endIn = null; this.finished = false;
   }
@@ -514,7 +518,7 @@ class Arena {
     const body = Body.create({ parts: parts_, friction: FRICTION, frictionStatic: FRICTION_STATIC, restitution: 0, frictionAir: .02, density: .002 });
     body.torre = { type, locked: false, sup: [], hull: null, fixed: false, glue: false, calmN: 0, age: 0 };
     Body.setPosition(body, { x: WW / 2, y: this.camY + 185 / ZOOM });
-    this.tx = WW / 2;
+    this.tx = WW / 2; this.gi = null;
     this.cur = body;       // a peça que cai NÃO está no motor de física: é movida pelo jogo, com encaixe exato
     if (this.coinsField.length < 2 && this.rc() < .55) this.coinsField.push({ x: WW * .3 + this.rc() * WW * .4, y: this.camY + 250 / ZOOM + this.rc() * 100 / ZOOM, t: this.rc() * 6 });
   }
@@ -540,6 +544,7 @@ class Arena {
     const b = this.cur;
     Body.rotate(b, Math.PI / 2);
     if (this.hits(b)) { Body.rotate(b, -Math.PI / 2); return; }   // não gira se for entrar em outra peça
+    this.gi = null;
     beep(520, .05, 'square', .02);
   }
   state() { return this._state || 'play'; }
@@ -550,7 +555,9 @@ class Arena {
     const fall = down ? FALL_FAST : (this.fastLeft > 0 ? FALL * SPELL_MULT : FALL);
     let bd = b.bounds; const w = bd.max.x - bd.min.x;
     this.tx = clamp(this.tx, 4 + w / 2, WW - 4 - w / 2);
-    const tl = clamp(Math.round((this.tx - w / 2 - WW / 2) / GRID) * GRID + WW / 2, 4, WW - 4 - w);
+    const want = (this.tx - w / 2 - WW / 2) / GRID;
+    if (this.gi == null || Math.abs(want - this.gi) > .5 + HYST) this.gi = Math.round(want);
+    const tl = clamp(this.gi * GRID + WW / 2, 4, WW - 4 - w);
     let dx = clamp(tl - bd.min.x, -MOVE_MAX, MOVE_MAX);
     if (Math.abs(dx) > .01 && !this.tryMove(dx, 0)) { const h = Math.sign(dx) * Math.min(Math.abs(dx), 1.5); this.tryMove(h, 0); }
     let rem = fall;
@@ -621,15 +628,26 @@ class Arena {
     else { const bad = this.chainCheck(b); if (bad.length) this.topple(bad); }
     this.spawnIn = .6; this.setMood('happy', .7); sfx.land();
     SAVE.blocks++; addCoins(1); this.earned += 1;
+    if (++this.landed % UNDO_EVERY === 0) { this.undos++; this.pop('+1 desfazer', '#9be59f'); }
+  }
+  /* poder básico: elimina a última peça posicionada */
+  undo() {
+    if (this.state() !== 'play') return;
+    if (this.live.length) { this.pop('Espere a torre parar', '#ffe08a'); return; }
+    const b = this.placed[this.placed.length - 1];
+    if (!b) { this.pop('Nada para desfazer', '#ffe08a'); return; }
+    if (this.undos <= 0) { this.pop('Sem desfazer', '#ff8fab'); return; }
+    this.undos--; Composite.remove(this.world, b); this.placed.pop();
+    this.pop('Peça removida', '#bff3ff'); beep(300, .09, 'triangle', .03);
   }
   /* linha de pavimento: ao alcançá-la, a torre vira chão firme (blocos fixos) e a próxima linha sobe */
   pave() {
     for (const b of this.placed) { if (!b.isStatic) Body.setStatic(b, true); b.torre.fixed = true; b.torre.sup = []; }
     this.live = [];
-    this.cpLevel = this.height + CP_STEP; this.cpFlash = 1; this.tools++;
+    this.cpLevel = this.height + CP_STEP; this.cpFlash = 1; this.tools++; this.undos++;
     if (this.lives < LIVES) this.lives++;
     addCoins(10); this.earned += 10; sfx.rec(); this.setMood('happy', 1.2);
-    this.pop('Pavimentado! +10', '#bff3ff'); this.pop('+1 cimento', '#cfd8e8');
+    this.pop('Pavimentado! +10', '#bff3ff'); this.pop('+1 cimento · +1 desfazer', '#cfd8e8');
   }
   useTool() {
     if (!this.cur || this.cur.torre.locked || this.state() !== 'play') return;
@@ -659,7 +677,7 @@ class Arena {
     // peça atual
     if (this.cur && !this.cur.torre.locked) {
       const dir = (held(keysDown, this.ctrl.right) ? 1 : 0) - (held(keysDown, this.ctrl.left) ? 1 : 0);
-      this.tx += dir * MOVE + this.windAmt * WIND_PUSH;
+      if (!(this.touch && this.touch.down)) this.tx += dir * MOVE + this.windAmt * WIND_PUSH;
       const bd = this.cur.bounds;
       for (const k of this.coinsField) {
         if (k.x > bd.min.x - 9 && k.x < bd.max.x + 9 && k.y > bd.min.y - 9 && k.y < bd.max.y + 9) {
@@ -700,7 +718,7 @@ class Arena {
       this.record = Math.floor(this.height / 100) * 100; addCoins(5); this.earned += 5; sfx.rec(); this.setMood('happy', 1); this.pop('Novo recorde! +5', '#9be59f');
     }
     this.coinsField = this.coinsField.filter(k => k.y < BASE_Y - this.height + 10);
-    this.camY += (Math.min(CAM0, BASE_Y - this.height - WH * .47) - this.camY) * .05;
+    this.camY += (Math.min(CAM0, BASE_Y - this.height - WH * .5) - this.camY) * .08;
     if (!this.cur) {
       this.spawnIn -= dt;
       if (this.spawnIn <= 0 && this.lives > 0 && this.live.length === 0) {
@@ -927,7 +945,7 @@ function layout() {
   const coarse = matchMedia('(pointer:coarse)').matches, pad = coarse ? 0 : 8;
   const k = Math.max(.2, Math.min((innerWidth - pad * 2) / W, (innerHeight - pad * 2) / H, 1.7));
   for (const a of Game.arenas) { a.cv.style.width = (W * k) + 'px'; a.cv.style.height = (H * k) + 'px'; }
-  const tb = $('gTool'); if (tb) tb.classList.toggle('hidden', !Game.arenas.length);
+  for (const id of ['gTool', 'gUndo']) { const tb = $(id); if (tb) tb.classList.toggle('hidden', !Game.arenas.length); }
 }
 window.addEventListener('resize', layout); window.addEventListener('orientationchange', () => setTimeout(layout, 200));
 function stopLoop() { Game.running = false; cancelAnimationFrame(Game.raf); }
@@ -1118,7 +1136,7 @@ window.addEventListener('keydown', e => {
   if (!$('game').classList.contains('hidden')) {
     if (BLOCK_KEYS.has(e.code)) e.preventDefault();
     if (e.code === 'KeyP' || e.code === 'Escape') { if (!e.repeat) setPause(!Game.paused); return; }
-    if (!e.repeat && !Game.paused && !Game.over) for (const a of Game.arenas) { if (a.ctrl.rot.includes(e.code)) a.rotate(); if (e.code === 'KeyE' || e.code === 'KeyC') a.useTool(); }
+    if (!e.repeat && !Game.paused && !Game.over) for (const a of Game.arenas) { if (a.ctrl.rot.includes(e.code)) a.rotate(); if (e.code === 'KeyE' || e.code === 'KeyC') a.useTool(); if (e.code === 'KeyZ' || e.code === 'KeyU') a.undo(); }
   }
   keysDown.add(e.code);
 });
@@ -1133,9 +1151,11 @@ $('btnShop').onclick = () => openShopTab('mascot');
 document.querySelectorAll('#nav button').forEach(b => b.onclick = () => { stopLoop(); go(b.dataset.go); });
 $('gPause').onclick = () => setPause(!Game.paused);
 $('gTool').onclick = () => { const a = Game.arenas[0]; if (a && !Game.paused && !Game.over) a.useTool(); };
+$('gUndo').onclick = () => { const a = Game.arenas[0]; if (a && !Game.paused && !Game.over) a.undo(); };
 function syncTool() {
   const a = Game.arenas[0], b = $('gTool'); if (!a || !b) return;
   const n = String(a.tools); if (b.dataset.n !== n) { b.dataset.n = n; $('gToolN').textContent = n; }
+  const u = $('gUndo'), un = String(a.undos); if (u.dataset.n !== un) { u.dataset.n = un; $('gUndoN').textContent = un; } u.classList.toggle('empty', a.undos <= 0);
   b.classList.toggle('armed', !!a.cement); b.classList.toggle('empty', a.tools <= 0 && !a.cement);
 }
 function toggleMute() { muted = !muted; document.body.classList.toggle('muted', muted); }

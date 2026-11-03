@@ -125,6 +125,12 @@
   #gTool:active .dia{transform:rotate(45deg) translateY(-3px)}
   #gTool.armed .dia{background:linear-gradient(135deg,#fff3b0,#ffc83d);border-color:#fff;box-shadow:0 0 0 3px rgba(255,255,255,.6),0 0 22px #ffe27a}
   #gTool.empty{filter:grayscale(.8) brightness(.8)}
+  #gUndo{position:fixed;right:22px;top:calc(196px + env(safe-area-inset-top));z-index:5;width:58px;height:58px;padding:0;border:0;background:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
+  #gUndo .dia{position:absolute;inset:6px;transform:rotate(45deg);border-radius:9px;border:3px solid #1d5a63;background:linear-gradient(135deg,#7fe3d4,#2f9fb0);box-shadow:0 4px 0 rgba(0,0,0,.35),0 8px 14px rgba(0,0,0,.35)}
+  #gUndo svg{position:absolute;left:13px;top:13px;width:32px;height:32px;fill:none;stroke:#fff;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+  #gUndo .n{position:absolute;right:-8px;bottom:-6px;min-width:24px;height:24px;border-radius:12px;background:#ffd166;color:#3a2200;font:700 14px/24px var(--sans);text-align:center;border:2px solid #a86b00}
+  #gUndo:active .dia{transform:rotate(45deg) translateY(-3px)}
+  #gUndo.empty{filter:grayscale(.8) brightness(.8)}
   .gold{color:var(--gold)}
   input{font-family:var(--sans);font-size:18px;font-weight:500;width:100%;height:50px;padding:0 16px;border-radius:16px;color:var(--txt);user-select:text;-webkit-user-select:text;
     background:rgba(4,20,24,.55);border:1.5px solid var(--line);outline:none}
@@ -243,6 +249,7 @@
     <li>Empilhe as peças na ilha. Se o <b>centro</b> da peça ficar além da borda de quem a apoia, ela <b>cai</b> (e leva consigo o que está em cima). Cada peça que cair tira uma das 3 vidas.</li>
     <li>Pegue as <b>moedas</b> flutuantes e bata <b>recordes de altura</b> para ganhar mais.</li>
     <li>Ao alcançar a <b>linha de diamantes</b>, a torre é <b>pavimentada</b>: os blocos viram chão firme, você ganha moedas, uma vida e +1 cimento.</li>
+    <li>O botão verde-água (ou tecla <kbd>Z</kbd>) <b>desfaz</b>: elimina a última peça colocada. Você começa com 1 e ganha mais a cada 8 peças e a cada pavimento.</li>
     <li>A <b>colher de pedreiro</b> (botão roxo, ou tecla <kbd>E</kbd>) cimenta o <b>próximo bloco</b>: ele fica fixo onde pousar.</li>
     <li>De vez em quando sopra um <b>vento</b> leve: ele empurra a peça que está caindo para o lado. Compense arrastando.</li>
     <li>Uma <b>Nuvem de Tempestade</b> aparece e solta um raio: as peças caem <b>mais rápido</b> por alguns segundos.</li>
@@ -264,6 +271,11 @@
     <span class="dia"></span>
     <svg viewBox="0 0 24 24"><path d="M3 20 14 8l4 4L6 21z"/><path d="M15 7l3-3 3 3-3 3" /></svg>
     <span class="n" id="gToolN">3</span>
+  </button>
+  <button id="gUndo" class="hidden" aria-label="Desfazer: remove a última peça" type="button">
+    <span class="dia"></span>
+    <svg viewBox="0 0 24 24"><path d="M9 7 4 12l5 5"/><path d="M4 12h10a6 6 0 0 1 0 12" transform="translate(0 -5)"/></svg>
+    <span class="n" id="gUndoN">1</span>
   </button>
   <div id="overlay" class="hidden"></div>
 </div>
