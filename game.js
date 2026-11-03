@@ -18,6 +18,10 @@ const S = 30;                  // tamanho de cada quadradinho do bloco (maior = 
 const BASE_Y = 560;            // altura da superfície da ilha
 const BASE_W = 160;            // largura da ilha
 const GRID = S / 2;            // "travas": a peça anda de meio em meio quadradinho e encaixa no alinhamento
+const A_SLIDE = .05;           // escorregar: aceleração lateral de um bloco sem apoio suficiente (px/frame²)
+const V_SLIDE = 2.2;           // escorregar: velocidade lateral máxima
+const G_FALL = .32;            // gravidade quando o grupo perde o apoio (px/frame²)
+const V_FALL = 14;             // velocidade máxima de queda
 const DROP_PX = 36;            // touch: quanto o dedo precisa descer (em linha reta) para a peça cair rápido
 const WIND_PUSH = .8;          // vento empurra a peça que está caindo (px por frame no pico)
 const CP_FIRST = 330;          // altura (px) da 1ª linha de pavimento; ~50 px = 1 m
@@ -33,14 +37,18 @@ const DRAG_GAIN = .6;          // touch: 1 = a peça acompanha o dedo exatamente
 const HYST = .4;               // touch: histerese da trava (maior = a peça só pula de casa depois de um arrasto mais claro)
 const GROUND_FROM_BOTTOM = 105; // distância da superfície da ilha até o fim da tela, no início (maior = ilha mais alta)
 const UNDO_START = 1;          // quantos "desfazer" o jogador começa tendo
+const STOP_START = 1;          // quantos "parar tempestade" o jogador começa tendo
+const STOP_EVERY = 12;         // +1 parar-tempestade a cada N peças (e +1 a cada pavimento)
 const UNDO_EVERY = 8;          // ganha +1 desfazer a cada N peças pousadas (e +1 a cada pavimento)
 const MOVE_MAX = 9;            // touch: velocidade lateral máxima da peça (menor = mais firme)
 const DEADZONE = 12;           // touch: pixels que o dedo precisa andar antes de contar como arrasto
 const FRICTION = 1;            // atrito entre blocos (mais alto = menos escorrega)
 const FRICTION_STATIC = 10;    // atrito parado (alto = o bloco "gruda" onde pousou)
 const WIND_FORCE = 0.00005;    // força do vento sobre a torre (0 desliga). Leve de propósito.
-const EVT_FIRST = 10;          // 1º evento (vento ou feitiço) depois de ~10 s; depois a cada 12–20 s
-const SPELL_TIME = 9;          // duração do feitiço do vilão (segundos)
+const EVT_FIRST = 18;          // 1º evento (vento ou feitiço) depois de ~10 s; depois a cada 12–20 s
+const SPELL_TIME = 14;         // duração do feitiço do vilão (segundos)
+const EVT_GAP = 28;             // tempo mínimo entre eventos (vento/tempestade), em segundos
+const EVT_GAP_VAR = 14;        // + sorteio de 0 a este valor
 const SPELL_MULT = 2.4;        // quanto as peças aceleram durante o feitiço
 const DUEL_PIECES = 25;        // peças por jogador no duelo
 const DPR = Math.min(2, window.devicePixelRatio || 1);
@@ -493,10 +501,10 @@ class Arena {
     this.base = Bodies.rectangle(WW / 2, BASE_Y + 15, BASE_W, 30, { isStatic: true, friction: FRICTION, frictionStatic: FRICTION_STATIC, restitution: 0, label: 'base' });
     Composite.add(this.world, this.base);
     this.rb = mulberry32(this.seed ^ 0x9e3779b9); this.rc = mulberry32(this.seed ^ 0x85ebca6b); this.re = mulberry32(this.seed ^ 0xc2b2ae35);
-    this.placed = []; this.live = []; this.cur = null; this.bag = []; this.coinsField = []; this.pops = [];
+    this.placed = []; this.slides = []; this.cur = null; this.bag = []; this.coinsField = []; this.pops = [];
     this.next = this.draw7();
     this.lives = LIVES; this.height = 0; this.record = 0; this.earned = 0;
-    this.camY = CAM0; this.t = 0; this.undos = UNDO_START; this.landed = 0; this.cpLevel = CP_FIRST; this.cpFlash = 0; this.tools = TOOLS_START; this.cement = false; this.calm = true; this.spawnIn = .5; this.wobble = 0;
+    this.camY = CAM0; this.t = 0; this.undos = UNDO_START; this.stops = STOP_START; this.landed = 0; this.cpLevel = CP_FIRST; this.cpFlash = 0; this.tools = TOOLS_START; this.cement = false; this.calm = true; this.spawnIn = .5; this.wobble = 0;
     this.mood = 'idle'; this.moodT = 0; this.windAmt = 0; this.evt = null; this.evtIn = EVT_FIRST + this.re() * 4; this.fastLeft = 0; this.flash = 0; this.streaks = [];
     this.spawned = 0; this.endIn = null; this.finished = false;
   }
@@ -520,12 +528,13 @@ class Arena {
     Body.setPosition(body, { x: WW / 2, y: this.camY + 185 / ZOOM });
     this.tx = WW / 2; this.gi = null;
     this.cur = body;       // a peça que cai NÃO está no motor de física: é movida pelo jogo, com encaixe exato
-    if (this.coinsField.length < 2 && this.rc() < .55) this.coinsField.push({ x: WW * .3 + this.rc() * WW * .4, y: this.camY + 250 / ZOOM + this.rc() * 100 / ZOOM, t: this.rc() * 6 });
+    if (this.coinsField.length < 2 && this.rc() < .55) this.coinsField.push({ x: WW * .42 + this.rc() * WW * .16, y: this.camY + 250 / ZOOM + this.rc() * 100 / ZOOM, t: this.rc() * 6 });
   }
   /* --- geometria (todas as peças pousadas são caixinhas alinhadas, então usamos os retângulos delas) --- */
-  hits(body) {
+  hits(body, skip) {
     const bb = body.bounds, E = .6, bp = partsOf(body);
     for (const o of this.placed.concat([this.base])) {
+      if (o === body || (skip && skip.has(o))) continue;
       const ob = o.bounds;
       if (bb.max.x <= ob.min.x + E || bb.min.x >= ob.max.x - E || bb.max.y <= ob.min.y + E || bb.min.y >= ob.max.y - E) continue;
       for (const p of bp) for (const q of partsOf(o)) {
@@ -569,10 +578,10 @@ class Arena {
     }
   }
   /* pouso: calcula o apoio. Se o centro de massa (com o peso de tudo que está em cima) passa da borda do apoio, a peça cai */
-  supportOf(b) {
+  supportOf(b, skip) {
     const set = new Set(); let lo = 1e9, hi = -1e9;
     for (const p of partsOf(b)) for (const o of this.placed.concat([this.base])) {
-      if (o === b) continue;
+      if (o === b || (skip && skip.has(o))) continue;
       for (const q of partsOf(o)) {
         if (Math.abs(q.bounds.min.y - p.bounds.max.y) > 1.6) continue;
         const a = Math.max(p.bounds.min.x, q.bounds.min.x), z = Math.min(p.bounds.max.x, q.bounds.max.x);
@@ -603,21 +612,55 @@ class Arena {
     }
     return bad;
   }
+  /* bloco sem apoio suficiente: ele e tudo que está em cima formam um grupo que ESCORREGA para o lado do excesso de peso;
+     quando o apoio acaba, o grupo cai reto pela gravidade e pousa de novo (sem pulo e sem giro) */
   topple(bad) {
     const rel = new Set();
     const add = X => { if (rel.has(X)) return; rel.add(X); for (const Y of this.placed) if (Y.torre.sup.indexOf(X) >= 0) add(Y); };
     for (const o of bad) add(o.X);
-    for (const X of rel) {
-      X.torre.sup = []; X.torre.hull = null; X.torre.fixed = false; X.torre.calmN = 0; X.torre.age = 0;
-      Body.setStatic(X, false); Body.setVelocity(X, { x: 0, y: 0 }); Body.setAngularVelocity(X, 0);
-      if (!this.live.includes(X)) this.live.push(X);
-    }
-    for (const o of bad) if (o.dir) { Body.setVelocity(o.X, { x: o.dir * .6, y: 0 }); Body.setAngularVelocity(o.X, o.dir * .012); }
+    for (const X of rel) { X.torre.sup = []; X.torre.hull = null; X.torre.fixed = false; X.torre.moving = true; }
+    const dir = (bad.map(o => o.dir).filter(Boolean)[0]) || 0;
+    this.slides.push({ members: Array.from(rel), set: rel, vx: 0, vy: 0, dir, age: 0 });
     this.pop('Sem apoio!', '#ff8fab'); sfx.lose();
   }
-  freeze(b) {
-    Body.setStatic(b, true); b.torre.fixed = true; b.torre.sup = []; b.torre.hull = null;
-    const i = this.live.indexOf(b); if (i >= 0) this.live.splice(i, 1);
+  moveGroup(g, dx, dy) {
+    for (const m of g.members) Body.translate(m, { x: dx, y: dy });
+    if (g.members.some(m => this.hits(m, g.set))) { for (const m of g.members) Body.translate(m, { x: -dx, y: -dy }); return false; }
+    return true;
+  }
+  settle(g) {
+    const i = this.slides.indexOf(g); if (i >= 0) this.slides.splice(i, 1);
+    for (const m of g.members) { m.torre.moving = false; m.torre.n = (m.torre.n || 0) + 1; }
+    for (const m of g.members) { const sp = this.supportOf(m); m.torre.sup = sp.bodies; m.torre.hull = sp.hull; }
+    const bad = [];
+    for (const m of g.members) {
+      if (m.torre.n >= 4) { m.torre.fixed = true; m.torre.sup = []; continue; }   // já escorregou demais: fica firme
+      for (const x of this.chainCheck(m)) if (!bad.some(o => o.X === x.X)) bad.push(x);
+    }
+    if (bad.length) this.topple(bad);
+  }
+  stepSlides() {
+    for (const g of this.slides.slice()) {
+      if (!this.slides.includes(g)) continue;
+      g.members = g.members.filter(m => this.placed.includes(m)); if (!g.members.length) { this.slides.splice(this.slides.indexOf(g), 1); continue; }
+      if (++g.age > 900) { for (const m of g.members) { m.torre.moving = false; m.torre.fixed = true; m.torre.sup = []; } this.slides.splice(this.slides.indexOf(g), 1); continue; }
+      const supported = g.members.some(m => this.supportOf(m, g.set).hull);
+      if (supported) {
+        g.vy = 0; g.vx = clamp(g.vx + g.dir * A_SLIDE, -V_SLIDE, V_SLIDE);
+        if (g.vx && !this.moveGroup(g, g.vx, 0)) { g.vx = 0; this.settle(g); }
+      } else {
+        g.vy = Math.min(g.vy + G_FALL, V_FALL);
+        if (g.vx && !this.moveGroup(g, g.vx, 0)) g.vx = 0;
+        let rem = g.vy, landed = false;
+        while (rem > 0) {
+          const d = Math.min(rem, 1.5);
+          if (this.moveGroup(g, 0, d)) { rem -= d; continue; }
+          for (const f of [.75, .4, .2, .1]) if (this.moveGroup(g, 0, f)) break;
+          landed = true; break;
+        }
+        if (landed) { sfx.land(); this.settle(g); }
+      }
+    }
   }
   land() {
     const b = this.cur; this.cur = null; b.torre.locked = true;
@@ -629,11 +672,22 @@ class Arena {
     this.spawnIn = .6; this.setMood('happy', .7); sfx.land();
     SAVE.blocks++; addCoins(1); this.earned += 1;
     if (++this.landed % UNDO_EVERY === 0) { this.undos++; this.pop('+1 desfazer', '#9be59f'); }
+    if (this.landed % STOP_EVERY === 0) { this.stops++; this.pop('+1 parar tempestade', '#ffe27a'); }
+  }
+  /* poder: interrompe a tempestade (a nuvem vai embora e as peças voltam ao ritmo normal) */
+  stopStorm() {
+    if (this.state() !== 'play') return;
+    const e = this.evt, active = this.fastLeft > 0 || (e && e.kind === 'spell');
+    if (!active) { this.pop('Sem tempestade agora', '#ffe08a'); return; }
+    if (this.stops <= 0) { this.pop('Sem poder de sol', '#ff8fab'); return; }
+    this.stops--; this.fastLeft = 0; this.flash = .5;
+    if (e && e.kind === 'spell') { e.fired = true; e.t = Math.max(e.t, 2); }
+    this.pop('Tempestade interrompida!', '#ffe27a'); sfx.rec();
   }
   /* poder básico: elimina a última peça posicionada */
   undo() {
     if (this.state() !== 'play') return;
-    if (this.live.length) { this.pop('Espere a torre parar', '#ffe08a'); return; }
+    if (this.slides.length) { this.pop('Espere a torre parar', '#ffe08a'); return; }
     const b = this.placed[this.placed.length - 1];
     if (!b) { this.pop('Nada para desfazer', '#ffe08a'); return; }
     if (this.undos <= 0) { this.pop('Sem desfazer', '#ff8fab'); return; }
@@ -642,12 +696,12 @@ class Arena {
   }
   /* linha de pavimento: ao alcançá-la, a torre vira chão firme (blocos fixos) e a próxima linha sobe */
   pave() {
-    for (const b of this.placed) { if (!b.isStatic) Body.setStatic(b, true); b.torre.fixed = true; b.torre.sup = []; }
-    this.live = [];
-    this.cpLevel = this.height + CP_STEP; this.cpFlash = 1; this.tools++; this.undos++;
+    for (const b of this.placed) { b.torre.fixed = true; b.torre.sup = []; b.torre.moving = false; }
+    this.slides = [];
+    this.cpLevel = this.height + CP_STEP; this.cpFlash = 1; this.tools++; this.undos++; this.stops++;
     if (this.lives < LIVES) this.lives++;
     addCoins(10); this.earned += 10; sfx.rec(); this.setMood('happy', 1.2);
-    this.pop('Pavimentado! +10', '#bff3ff'); this.pop('+1 cimento · +1 desfazer', '#cfd8e8');
+    this.pop('Pavimentado! +10', '#bff3ff'); this.pop('+1 cimento · desfazer · sol', '#cfd8e8');
   }
   useTool() {
     if (!this.cur || this.cur.torre.locked || this.state() !== 'play') return;
@@ -672,7 +726,6 @@ class Arena {
     else this.runEvent(dt);
     if (this.fastLeft > 0) this.fastLeft -= dt;
     if (this.flash > 0) this.flash -= dt;
-    if (this.windAmt) for (const b of this.live) Body.applyForce(b, b.position, { x: this.windAmt * WIND_FORCE * b.mass, y: 0 });
     this.streaks = this.streaks.filter(q => { q.x += q.sp * 60 * dt; return q.x > -140 && q.x < W + 140; });
     // peça atual
     if (this.cur && !this.cur.torre.locked) {
@@ -690,26 +743,19 @@ class Arena {
     }
     Engine.update(this.engine, 1000 / 60);
     for (let i = Math.max(0, this.placed.length - 4); i < this.placed.length; i++) { const t_ = this.placed[i].torre; if (t_.flash > 0) t_.flash = Math.max(0, t_.flash - dt * 3.5); }
-    // peças que desabaram: quando param (ou passam de 6 s), viram chão firme; assim nada fica "tremendo"
-    for (const b of this.live.slice()) {
-      b.torre.age++;
-      const calm = b.speed < .2 && Math.abs(b.angularSpeed || 0) < .004;
-      b.torre.calmN = calm ? b.torre.calmN + 1 : 0;
-      if (b.speed > 14) { const k = 14 / b.speed; Body.setVelocity(b, { x: b.velocity.x * k, y: b.velocity.y * k }); }
-      if (b.torre.calmN > 25 || b.torre.age > 360) this.freeze(b);
-    }
+    this.stepSlides();
     // peças caídas e altura da torre
     let top = BASE_Y, wob = 0;
     for (const b of this.placed.slice()) {
       if (b.position.y > BASE_Y + 600) {
-        Composite.remove(this.world, b); this.placed.splice(this.placed.indexOf(b), 1); const li = this.live.indexOf(b); if (li >= 0) this.live.splice(li, 1);
+        Composite.remove(this.world, b); this.placed.splice(this.placed.indexOf(b), 1);
         this.lives--; this.setMood('sad', 1.2); sfx.lose(); this.pop('Caiu!', '#ff8fab'); continue;
       }
-      wob += b.speed + Math.abs(b.angularSpeed) * 20;
-      if (b.speed < .6 && b.position.y < BASE_Y + 50) top = Math.min(top, b.bounds.min.y);
+      if (b.torre.moving) { wob += 3; continue; }
+      if (b.position.y < BASE_Y + 50) top = Math.min(top, b.bounds.min.y);
     }
     this.height = Math.max(0, BASE_Y - top);
-    this.calm = this.live.length === 0;
+    this.calm = this.slides.length === 0;
     if (this.cpFlash > 0) this.cpFlash -= dt;
     if (this.height >= this.cpLevel && this.calm && this.cur) this.pave();
     this.wobble += (wob - this.wobble) * .08;
@@ -721,7 +767,7 @@ class Arena {
     this.camY += (Math.min(CAM0, BASE_Y - this.height - WH * .5) - this.camY) * .08;
     if (!this.cur) {
       this.spawnIn -= dt;
-      if (this.spawnIn <= 0 && this.lives > 0 && this.live.length === 0) {
+      if (this.spawnIn <= 0 && this.lives > 0 && this.slides.length === 0) {
         if (this.limit && this.spawned >= this.limit) { if (this.endIn === null) this.endIn = 2.8; }
         else this.spawn();
       }
@@ -746,7 +792,7 @@ class Arena {
       if (e.t > 2.8) this.endEvent();
     }
   }
-  endEvent() { this.evt = null; this.windAmt = 0; this.evtIn = 12 + this.re() * 8; }
+  endEvent() { this.evt = null; this.windAmt = 0; this.evtIn = EVT_GAP + this.re() * EVT_GAP_VAR; }
   drawEvent(c) {
     const e = this.evt; if (!e || e.kind !== 'spell') return;
     const t = e.t, ease = k => 1 - Math.pow(1 - clamp(k, 0, 1), 3);
@@ -754,7 +800,7 @@ class Arena {
     if (t < .8) x = W + 90 - (W + 90 - (W - 66)) * ease(t / .8);
     else if (t < 2) x = W - 66;
     else x = W - 66 + 160 * clamp((t - 2) / .8, 0, 1);
-    const y = 300, sc = 1.45, charge = clamp((t - .8) / .9, 0, 1) * (t < 1.8 ? 1 : 1.4);
+    const y = 420, sc = 1.45, charge = clamp((t - .8) / .9, 0, 1) * (t < 1.8 ? 1 : 1.4);
     drawVillain(c, x, y, sc, this.t, charge);
     const tipX = x, tipY = y + 28 * sc;
     if (t > 1.45 && t < 1.95 && this.cur) {
@@ -945,7 +991,7 @@ function layout() {
   const coarse = matchMedia('(pointer:coarse)').matches, pad = coarse ? 0 : 8;
   const k = Math.max(.2, Math.min((innerWidth - pad * 2) / W, (innerHeight - pad * 2) / H, 1.7));
   for (const a of Game.arenas) { a.cv.style.width = (W * k) + 'px'; a.cv.style.height = (H * k) + 'px'; }
-  for (const id of ['gTool', 'gUndo']) { const tb = $(id); if (tb) tb.classList.toggle('hidden', !Game.arenas.length); }
+  for (const id of ['gTool', 'gUndo', 'gSun']) { const tb = $(id); if (tb) tb.classList.toggle('hidden', !Game.arenas.length); }
 }
 window.addEventListener('resize', layout); window.addEventListener('orientationchange', () => setTimeout(layout, 200));
 function stopLoop() { Game.running = false; cancelAnimationFrame(Game.raf); }
@@ -1136,7 +1182,7 @@ window.addEventListener('keydown', e => {
   if (!$('game').classList.contains('hidden')) {
     if (BLOCK_KEYS.has(e.code)) e.preventDefault();
     if (e.code === 'KeyP' || e.code === 'Escape') { if (!e.repeat) setPause(!Game.paused); return; }
-    if (!e.repeat && !Game.paused && !Game.over) for (const a of Game.arenas) { if (a.ctrl.rot.includes(e.code)) a.rotate(); if (e.code === 'KeyE' || e.code === 'KeyC') a.useTool(); if (e.code === 'KeyZ' || e.code === 'KeyU') a.undo(); }
+    if (!e.repeat && !Game.paused && !Game.over) for (const a of Game.arenas) { if (a.ctrl.rot.includes(e.code)) a.rotate(); if (e.code === 'KeyE' || e.code === 'KeyC') a.useTool(); if (e.code === 'KeyZ' || e.code === 'KeyU') a.undo(); if (e.code === 'KeyX' || e.code === 'KeyT') a.stopStorm(); }
   }
   keysDown.add(e.code);
 });
@@ -1151,11 +1197,13 @@ $('btnShop').onclick = () => openShopTab('mascot');
 document.querySelectorAll('#nav button').forEach(b => b.onclick = () => { stopLoop(); go(b.dataset.go); });
 $('gPause').onclick = () => setPause(!Game.paused);
 $('gTool').onclick = () => { const a = Game.arenas[0]; if (a && !Game.paused && !Game.over) a.useTool(); };
+$('gSun').onclick = () => { const a = Game.arenas[0]; if (a && !Game.paused && !Game.over) a.stopStorm(); };
 $('gUndo').onclick = () => { const a = Game.arenas[0]; if (a && !Game.paused && !Game.over) a.undo(); };
 function syncTool() {
   const a = Game.arenas[0], b = $('gTool'); if (!a || !b) return;
   const n = String(a.tools); if (b.dataset.n !== n) { b.dataset.n = n; $('gToolN').textContent = n; }
   const u = $('gUndo'), un = String(a.undos); if (u.dataset.n !== un) { u.dataset.n = un; $('gUndoN').textContent = un; } u.classList.toggle('empty', a.undos <= 0);
+  const sn = $('gSun'), sv = String(a.stops); if (sn.dataset.n !== sv) { sn.dataset.n = sv; $('gSunN').textContent = sv; } sn.classList.toggle('empty', a.stops <= 0); sn.classList.toggle('armed', a.fastLeft > 0 || !!(a.evt && a.evt.kind === 'spell'));
   b.classList.toggle('armed', !!a.cement); b.classList.toggle('empty', a.tools <= 0 && !a.cement);
 }
 function toggleMute() { muted = !muted; document.body.classList.toggle('muted', muted); }
