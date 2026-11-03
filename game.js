@@ -18,10 +18,11 @@ const S = 30;                  // tamanho de cada quadradinho do bloco (maior = 
 const BASE_Y = 560;            // altura da superfície da ilha
 const BASE_W = 160;            // largura da ilha
 const GRID = S / 2;            // "travas": a peça anda de meio em meio quadradinho e encaixa no alinhamento
-const A_SLIDE = .05;           // escorregar: aceleração lateral de um bloco sem apoio suficiente (px/frame²)
-const V_SLIDE = 2.2;           // escorregar: velocidade lateral máxima
-const G_FALL = .32;            // gravidade quando o grupo perde o apoio (px/frame²)
+const G_FALL = .32;            // gravidade dos blocos que perderam o apoio (px/frame²)
 const V_FALL = 14;             // velocidade máxima de queda
+const TIP_MIN_ARM = 3;         // tombar: braço de alavanca mínimo (px): o quanto o peso já "puxa" quando o centro está quase na borda
+const OMEGA_MAX = .12;         // tombar: giro máximo (rad/frame)
+const TIP_RELEASE = 1.1;       // tombar: ângulo (rad) em que o bloco desencosta da borda e passa a cair solto
 const DROP_PX = 36;            // touch: quanto o dedo precisa descer (em linha reta) para a peça cair rápido
 const WIND_PUSH = .8;          // vento empurra a peça que está caindo (px por frame no pico)
 const CP_FIRST = 330;          // altura (px) da 1ª linha de pavimento; ~50 px = 1 m
@@ -450,6 +451,22 @@ function drawVillain(c, x, y, sc, t, charge) {
 }
 
 /* ====== ARENA (um jogador) ====== */
+function satDepth(A, B) {      // sobreposição mínima entre dois polígonos convexos (0 = separados)
+  let min = 1e9;
+  for (const poly of [A, B]) {
+    for (let i = 0; i < poly.length; i++) {
+      const p1 = poly[i], p2 = poly[(i + 1) % poly.length];
+      let nx = p2.y - p1.y, ny = p1.x - p2.x; const L = Math.hypot(nx, ny) || 1; nx /= L; ny /= L;
+      let a0 = 1e9, a1 = -1e9, b0 = 1e9, b1 = -1e9;
+      for (const v of A) { const d = v.x * nx + v.y * ny; if (d < a0) a0 = d; if (d > a1) a1 = d; }
+      for (const v of B) { const d = v.x * nx + v.y * ny; if (d < b0) b0 = d; if (d > b1) b1 = d; }
+      const ov = Math.min(a1, b1) - Math.max(a0, b0);
+      if (ov <= 0) return 0;
+      if (ov < min) min = ov;
+    }
+  }
+  return min;
+}
 const partsOf = b => (b.parts.length > 1 ? b.parts.slice(1) : b.parts);
 const held = (keys, list) => list.some(k => keys.has(k));
 const keysDown = new Set();
@@ -538,6 +555,7 @@ class Arena {
       const ob = o.bounds;
       if (bb.max.x <= ob.min.x + E || bb.min.x >= ob.max.x - E || bb.max.y <= ob.min.y + E || bb.min.y >= ob.max.y - E) continue;
       for (const p of bp) for (const q of partsOf(o)) {
+        if (o.torre && o.torre.tilted) { if (p.bounds.max.x > q.bounds.min.x && p.bounds.min.x < q.bounds.max.x && p.bounds.max.y > q.bounds.min.y && p.bounds.min.y < q.bounds.max.y && satDepth(p.vertices, q.vertices) > 1.2) return true; continue; }
         if (p.bounds.max.x > q.bounds.min.x + E && p.bounds.min.x < q.bounds.max.x - E && p.bounds.max.y > q.bounds.min.y + E && p.bounds.min.y < q.bounds.max.y - E) return true;
       }
     }
@@ -579,16 +597,16 @@ class Arena {
   }
   /* pouso: calcula o apoio. Se o centro de massa (com o peso de tudo que está em cima) passa da borda do apoio, a peça cai */
   supportOf(b, skip) {
-    const set = new Set(); let lo = 1e9, hi = -1e9;
+    const set = new Set(); let lo = 1e9, hi = -1e9, ytop = 0, ys = 0, yn = 0;
     for (const p of partsOf(b)) for (const o of this.placed.concat([this.base])) {
       if (o === b || (skip && skip.has(o))) continue;
       for (const q of partsOf(o)) {
         if (Math.abs(q.bounds.min.y - p.bounds.max.y) > 1.6) continue;
         const a = Math.max(p.bounds.min.x, q.bounds.min.x), z = Math.min(p.bounds.max.x, q.bounds.max.x);
-        if (z - a > 1) { lo = Math.min(lo, a); hi = Math.max(hi, z); if (o !== this.base) set.add(o); }
+        if (z - a > 1) { lo = Math.min(lo, a); hi = Math.max(hi, z); ytop = q.bounds.min.y; ys += q.bounds.min.y; yn++; if (o !== this.base) set.add(o); }
       }
     }
-    return { bodies: Array.from(set), hull: hi > lo ? [lo, hi] : null };
+    return { bodies: Array.from(set), hull: hi > lo ? [lo, hi, ys / yn] : null, y: ytop };
   }
   chainCheck(N) {
     const anc = [], seen = new Set(), q = [N];
@@ -612,21 +630,46 @@ class Arena {
     }
     return bad;
   }
-  /* bloco sem apoio suficiente: ele e tudo que está em cima formam um grupo que ESCORREGA para o lado do excesso de peso;
-     quando o apoio acaba, o grupo cai reto pela gravidade e pousa de novo (sem pulo e sem giro) */
+  /* bloco sem apoio suficiente: ele e tudo que está em cima formam um grupo rígido que TOMBA pela quina do apoio
+     (o peso puxa para baixo e o grupo gira em torno da quina), depois desencosta e cai solto com a gravidade */
   topple(bad) {
+    bad = bad.slice().sort((p, q) => q.X.bounds.max.y - p.X.bounds.max.y);   // o mais baixo cai primeiro, levando o que está em cima
+    const X = bad[0].X, dir = bad[0].dir, hull = X.torre.hull;
     const rel = new Set();
-    const add = X => { if (rel.has(X)) return; rel.add(X); for (const Y of this.placed) if (Y.torre.sup.indexOf(X) >= 0) add(Y); };
-    for (const o of bad) add(o.X);
-    for (const X of rel) { X.torre.sup = []; X.torre.hull = null; X.torre.fixed = false; X.torre.moving = true; }
-    const dir = (bad.map(o => o.dir).filter(Boolean)[0]) || 0;
-    this.slides.push({ members: Array.from(rel), set: rel, vx: 0, vy: 0, dir, age: 0 });
+    const add = Z => { if (rel.has(Z)) return; rel.add(Z); for (const Y of this.placed) if (Y.torre.sup.indexOf(Z) >= 0) add(Y); };
+    add(X);
+    for (const Z of rel) { Z.torre.sup = []; Z.torre.hull = null; Z.torre.fixed = false; Z.torre.moving = true; }
+    const g = { members: Array.from(rel), set: rel, mode: 'fly', dir, P: null, w: 0, th: 0, v: { x: 0, y: 0 }, age: 0 };
+    if (hull && dir) { g.mode = 'tip'; g.P = { x: dir > 0 ? hull[1] : hull[0], y: hull[2] }; }
+    this.slides.push(g);
     this.pop('Sem apoio!', '#ff8fab'); sfx.lose();
   }
-  moveGroup(g, dx, dy) {
-    for (const m of g.members) Body.translate(m, { x: dx, y: dy });
-    if (g.members.some(m => this.hits(m, g.set))) { for (const m of g.members) Body.translate(m, { x: -dx, y: -dy }); return false; }
-    return true;
+  groupHitsPoly(g) {
+    for (const m of g.members) for (const p of partsOf(m)) {
+      for (const o of this.placed.concat([this.base])) {
+        if (g.set.has(o)) continue;
+        const ob = o.bounds; if (p.bounds.max.x <= ob.min.x || p.bounds.min.x >= ob.max.x || p.bounds.max.y <= ob.min.y || p.bounds.min.y >= ob.max.y) continue;
+        for (const q of partsOf(o)) {
+          if (p.bounds.max.x <= q.bounds.min.x || p.bounds.min.x >= q.bounds.max.x || p.bounds.max.y <= q.bounds.min.y || p.bounds.min.y >= q.bounds.max.y) continue;
+          if (satDepth(p.vertices, q.vertices) > 1.5) return true;
+        }
+      }
+    }
+    return false;
+  }
+  groupCenter(g) {
+    let x = 0, y = 0, n = 0;
+    for (const m of g.members) for (const p of partsOf(m)) { x += p.position.x; y += p.position.y; n++; }
+    return { x: x / n, y: y / n };
+  }
+  rotateGroup(g, ang, pt) { for (const m of g.members) Body.rotate(m, ang, pt); }
+  moveGroupBy(g, dx, dy) { for (const m of g.members) Body.translate(m, { x: dx, y: dy }); }
+  /* o grupo parou: se está reto, vira peça normal (confere o apoio de novo); se está torto, vira entulho firme onde parou */
+  stopGroup(g) {
+    if (Math.abs(g.th) < .03 && Math.abs(g.w) < .01) { this.settle(g); return; }
+    const i = this.slides.indexOf(g); if (i >= 0) this.slides.splice(i, 1);
+    for (const m of g.members) { m.torre.moving = false; m.torre.fixed = true; m.torre.sup = []; m.torre.hull = null; m.torre.tilted = true; }
+    sfx.land();
   }
   settle(g) {
     const i = this.slides.indexOf(g); if (i >= 0) this.slides.splice(i, 1);
@@ -634,31 +677,51 @@ class Arena {
     for (const m of g.members) { const sp = this.supportOf(m); m.torre.sup = sp.bodies; m.torre.hull = sp.hull; }
     const bad = [];
     for (const m of g.members) {
-      if (m.torre.n >= 4) { m.torre.fixed = true; m.torre.sup = []; continue; }   // já escorregou demais: fica firme
+      if (m.torre.n >= 4) { m.torre.fixed = true; m.torre.sup = []; continue; }
       for (const x of this.chainCheck(m)) if (!bad.some(o => o.X === x.X)) bad.push(x);
     }
-    if (bad.length) this.topple(bad);
+    if (bad.length) this.topple(bad); else sfx.land();
   }
   stepSlides() {
     for (const g of this.slides.slice()) {
       if (!this.slides.includes(g)) continue;
       g.members = g.members.filter(m => this.placed.includes(m)); if (!g.members.length) { this.slides.splice(this.slides.indexOf(g), 1); continue; }
       if (++g.age > 900) { for (const m of g.members) { m.torre.moving = false; m.torre.fixed = true; m.torre.sup = []; } this.slides.splice(this.slides.indexOf(g), 1); continue; }
-      const supported = g.members.some(m => this.supportOf(m, g.set).hull);
-      if (supported) {
-        g.vy = 0; g.vx = clamp(g.vx + g.dir * A_SLIDE, -V_SLIDE, V_SLIDE);
-        if (g.vx && !this.moveGroup(g, g.vx, 0)) { g.vx = 0; this.settle(g); }
-      } else {
-        g.vy = Math.min(g.vy + G_FALL, V_FALL);
-        if (g.vx && !this.moveGroup(g, g.vx, 0)) g.vx = 0;
-        let rem = g.vy, landed = false;
-        while (rem > 0) {
-          const d = Math.min(rem, 1.5);
-          if (this.moveGroup(g, 0, d)) { rem -= d; continue; }
-          for (const f of [.75, .4, .2, .1]) if (this.moveGroup(g, 0, f)) break;
-          landed = true; break;
+      if (g.mode === 'tip') {
+        // física de um corpo rígido apoiado numa quina: o peso (centro de massa fora da borda) gera torque e o grupo gira
+        let sx = 0, I = 0, n = 0;
+        for (const m of g.members) for (const p of partsOf(m)) { const dx = p.position.x - g.P.x, dy = p.position.y - g.P.y; sx += dx; I += dx * dx + dy * dy + S * S / 6; n++; }
+        let tau = G_FALL * sx; const minT = G_FALL * n * TIP_MIN_ARM;
+        if (g.dir * tau < minT) tau = g.dir * minT;
+        g.w = clamp(g.w + tau / I, -OMEGA_MAX, OMEGA_MAX);
+        this.rotateGroup(g, g.w, g.P);
+        if (this.groupHitsPoly(g)) { this.rotateGroup(g, -g.w, g.P); this.stopGroup(g); continue; }
+        g.th += g.w;
+        if (Math.abs(g.th) >= TIP_RELEASE) {
+          const C = this.groupCenter(g), rx = C.x - g.P.x, ry = C.y - g.P.y;
+          g.v = { x: -ry * g.w, y: rx * g.w }; g.mode = 'fly';
         }
-        if (landed) { sfx.land(); this.settle(g); }
+      } else {
+        // queda livre: gravidade puxa para baixo, o giro adquirido continua
+        g.v.y = Math.min(g.v.y + G_FALL, V_FALL);
+        const steps = Math.max(1, Math.ceil(Math.hypot(g.v.x, g.v.y) / 3)); let stopped = false;
+        for (let k = 0; k < steps && !stopped; k++) {
+          const dx = g.v.x / steps, dy = g.v.y / steps, da = g.w / steps;
+          this.moveGroupBy(g, dx, dy);
+          if (da) this.rotateGroup(g, da, this.groupCenter(g));
+          g.th += da;
+          if (this.groupHitsPoly(g)) {
+            // roçou na quina do apoio: empurra para o lado do excesso de peso (escorrega pela quina) e segue caindo
+            let freed = false;
+            if (g.dir) for (let n = 1; n <= 6 && !freed; n++) { this.moveGroupBy(g, g.dir * 1.5, 0); if (!this.groupHitsPoly(g)) freed = true; }
+            if (!freed) {
+              if (g.dir) this.moveGroupBy(g, -g.dir * 9, 0);
+              if (da) this.rotateGroup(g, -da, this.groupCenter(g));
+              g.th -= da; this.moveGroupBy(g, -dx, -dy); stopped = true;
+            }
+          }
+        }
+        if (stopped) this.stopGroup(g);
       }
     }
   }
