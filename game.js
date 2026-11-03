@@ -11,23 +11,25 @@ const { Engine, Bodies, Body, Composite, Events } = Matter;
 try { document.fonts.load('600 16px Outfit'); document.fonts.load('700 32px "Cormorant Garamond"'); } catch (e) {}
 
 /* ====== AJUSTES FÁCEIS (mexa aqui para mudar a dificuldade) ====== */
-const ZOOM = .5;               // zoom da câmera: menor = blocos menores na tela (99 Bricks ≈ cada quadradinho 3,6% da largura)
+const ZOOM = 14 / 30;          // zoom da câmera. Medido no 99 Bricks: cada quadradinho = 3,5% da largura da tela (14 de 400)
 const W = 400, WW = W / ZOOM;  // W = largura da tela lógica; WW = largura do mundo da física
 let H = 700, WH = 1400, CAM0 = 0;   // tamanho lógico da arena (a altura H se adapta à tela do celular)
-const S = 40;                  // tamanho de cada quadradinho do bloco (maior = blocos maiores)
+const S = 30;                  // tamanho de cada quadradinho do bloco (maior = blocos maiores)
 const BASE_Y = 560;            // altura da superfície da ilha
-const BASE_W = 200;            // largura da ilha
-const KEEP_LIVE = 3;            // só os últimos N blocos ainda se mexem; os mais antigos viram chão firme
+const BASE_W = 160;            // largura da ilha
+const GRID = S / 2;            // "travas": a peça anda de meio em meio quadradinho e encaixa no alinhamento
+const DROP_PX = 36;            // touch: quanto o dedo precisa descer (em linha reta) para a peça cair rápido
+const WIND_PUSH = .8;          // vento empurra a peça que está caindo (px por frame no pico)
 const CP_FIRST = 330;          // altura (px) da 1ª linha de pavimento; ~50 px = 1 m
 const CP_STEP = 330;           // distância até a próxima linha depois de pavimentar
 const TOOLS_START = 3;         // usos da colher de pedreiro (cimento) no início
 function fitWorld() { const vw = Math.min(innerWidth, innerHeight * .62); H = Math.max(640, Math.min(940, Math.round(W * innerHeight / Math.max(1, vw)))); WH = H / ZOOM; CAM0 = BASE_Y + 150 / ZOOM - WH; }
 const GOAL = 600;              // altura da meta no modo 2 jogadores
 const LIVES = 3;               // blocos que podem cair antes de perder
-const FALL = 1.6;              // velocidade normal de queda (menor = mais devagar)
-const FALL_FAST = 7;           // velocidade ao segurar "descer"
+const FALL = 1.3;              // velocidade normal de queda (menor = mais devagar)
+const FALL_FAST = 16;           // velocidade ao segurar "descer"
 const MOVE = 4;                // velocidade lateral no teclado
-const DRAG_GAIN = 0.85;        // touch: 1 = a peça acompanha o dedo exatamente; menor = menos sensível
+const DRAG_GAIN = 1.0;         // touch: 1 = a peça acompanha o dedo exatamente; menor = menos sensível
 const MOVE_MAX = 9;            // touch: velocidade lateral máxima da peça (menor = mais firme)
 const DEADZONE = 8;            // touch: pixels que o dedo precisa andar antes de contar como arrasto
 const FRICTION = 1;            // atrito entre blocos (mais alto = menos escorrega)
@@ -436,6 +438,7 @@ function drawVillain(c, x, y, sc, t, charge) {
 }
 
 /* ====== ARENA (um jogador) ====== */
+const partsOf = b => (b.parts.length > 1 ? b.parts.slice(1) : b.parts);
 const held = (keys, list) => list.some(k => keys.has(k));
 const keysDown = new Set();
 
@@ -449,7 +452,7 @@ class Arena {
     this.bindTouch();
     this.reset();
   }
-  /* Gestos: arrastar = mover · toque rápido = girar · deslizar p/ baixo (segurando) = cair rápido */
+  /* Gestos: arrastar = mover (encaixa de meio em meio bloco) · toque rápido = girar · puxar o dedo para baixo = cair rápido */
   bindTouch() {
     const cv = this.cv;
     const toL = dx => dx * WW / Math.max(1, cv.getBoundingClientRect().width);
@@ -457,20 +460,20 @@ class Arena {
       if (this.touch || Game.paused || Game.over) return;
       e.preventDefault();
       try { cv.setPointerCapture(e.pointerId); } catch (_) {}
-      this.touch = { id: e.pointerId, sx: e.clientX, sy: e.clientY, lx: e.clientX, t0: performance.now(), moved: false, down: false, mode: null };
+      this.touch = { id: e.pointerId, sx: e.clientX, sy: e.clientY, lx: e.clientX, ly: e.clientY, ay: e.clientY, t0: performance.now(), moved: false, down: false };
       this.tx = this.cur ? this.cur.position.x : WW / 2; this.hint = 0;
     });
     cv.addEventListener('pointermove', e => {
       const t = this.touch; if (!t || t.id !== e.pointerId) return;
       e.preventDefault();
-      const dx = e.clientX - t.sx, dy = e.clientY - t.sy;
-      // decide o gesto UMA vez: arrastar (lado) ou descer (para baixo). Desvio vertical durante o arrasto não faz a peça cair.
-      if (!t.mode && Math.hypot(dx, dy) > DEADZONE) {
-        t.mode = (dy > Math.abs(dx) * 1.6) ? 'drop' : 'drag';
-        t.moved = true; t.lx = e.clientX;
-      }
-      if (t.mode === 'drag') { this.tx = clamp(this.tx + toL(e.clientX - t.lx) * DRAG_GAIN, S, WW - S); t.lx = e.clientX; }
-      else if (t.mode === 'drop') t.down = true;
+      const mx = e.clientX - t.lx, my = e.clientY - t.ly; t.lx = e.clientX; t.ly = e.clientY;
+      let first = false;
+      if (!t.moved && Math.hypot(e.clientX - t.sx, e.clientY - t.sy) > DEADZONE) { t.moved = true; first = true; t.ay = e.clientY - my; }
+      if (!t.moved) return;
+      // movimento mais horizontal (ou para cima) zera a "âncora" de descida: arrastar de lado com a mão torta não faz a peça cair
+      if (Math.abs(mx) > Math.abs(my) || my < 0) t.ay = e.clientY;
+      t.down = (e.clientY - t.ay) > DROP_PX;
+      if (!t.down) this.tx += toL(first ? e.clientX - t.sx : mx) * DRAG_GAIN;
     });
     const end = e => {
       const t = this.touch; if (!t || t.id !== e.pointerId) return;
@@ -486,18 +489,12 @@ class Arena {
     this.base = Bodies.rectangle(WW / 2, BASE_Y + 15, BASE_W, 30, { isStatic: true, friction: FRICTION, frictionStatic: FRICTION_STATIC, restitution: 0, label: 'base' });
     Composite.add(this.world, this.base);
     this.rb = mulberry32(this.seed ^ 0x9e3779b9); this.rc = mulberry32(this.seed ^ 0x85ebca6b); this.re = mulberry32(this.seed ^ 0xc2b2ae35);
-    this.placed = []; this.cur = null; this.bag = []; this.coinsField = []; this.pops = [];
+    this.placed = []; this.live = []; this.cur = null; this.bag = []; this.coinsField = []; this.pops = [];
     this.next = this.draw7();
     this.lives = LIVES; this.height = 0; this.record = 0; this.earned = 0;
     this.camY = CAM0; this.t = 0; this.cpLevel = CP_FIRST; this.cpFlash = 0; this.tools = TOOLS_START; this.cement = false; this.calm = true; this.spawnIn = .5; this.wobble = 0;
     this.mood = 'idle'; this.moodT = 0; this.windAmt = 0; this.evt = null; this.evtIn = EVT_FIRST + this.re() * 4; this.fastLeft = 0; this.flash = 0; this.streaks = [];
     this.spawned = 0; this.endIn = null; this.finished = false;
-    Events.on(this.engine, 'collisionStart', e => {
-      for (const p of e.pairs) {
-        const a = p.bodyA.parent || p.bodyA, b = p.bodyB.parent || p.bodyB;
-        if (this.cur && !this.cur.torre.locked && (a === this.cur || b === this.cur)) { this.lockCur(); break; }
-      }
-    });
   }
   draw7() {
     if (!this.bag.length) {
@@ -513,39 +510,122 @@ class Arena {
     this.spawned++;
     const type = this.next; this.next = this.draw7();
     // opções novas a cada quadradinho (o Matter apaga "chamfer" do objeto) e atrito definido em cada parte E no corpo
-    const parts = SHAPES[type].map(([cx, cy]) => Bodies.rectangle(cx * S, cy * S, S, S, { friction: FRICTION, frictionStatic: FRICTION_STATIC, restitution: 0, density: .002}));
-    const body = Body.create({ parts, friction: FRICTION, frictionStatic: FRICTION_STATIC, restitution: 0, frictionAir: .02, density: .002 });
-    body.torre = { type, locked: false };
+    const parts_ = SHAPES[type].map(([cx, cy]) => Bodies.rectangle(cx * S, cy * S, S, S, { friction: FRICTION, frictionStatic: FRICTION_STATIC, restitution: 0, density: .002 }));
+    const body = Body.create({ parts: parts_, friction: FRICTION, frictionStatic: FRICTION_STATIC, restitution: 0, frictionAir: .02, density: .002 });
+    body.torre = { type, locked: false, sup: [], hull: null, fixed: false, glue: false, calmN: 0, age: 0 };
     Body.setPosition(body, { x: WW / 2, y: this.camY + 185 / ZOOM });
     this.tx = WW / 2;
-    Composite.add(this.world, body);
-    this.cur = body;
+    this.cur = body;       // a peça que cai NÃO está no motor de física: é movida pelo jogo, com encaixe exato
     if (this.coinsField.length < 2 && this.rc() < .55) this.coinsField.push({ x: WW * .3 + this.rc() * WW * .4, y: this.camY + 250 / ZOOM + this.rc() * 100 / ZOOM, t: this.rc() * 6 });
+  }
+  /* --- geometria (todas as peças pousadas são caixinhas alinhadas, então usamos os retângulos delas) --- */
+  hits(body) {
+    const bb = body.bounds, E = .6, bp = partsOf(body);
+    for (const o of this.placed.concat([this.base])) {
+      const ob = o.bounds;
+      if (bb.max.x <= ob.min.x + E || bb.min.x >= ob.max.x - E || bb.max.y <= ob.min.y + E || bb.min.y >= ob.max.y - E) continue;
+      for (const p of bp) for (const q of partsOf(o)) {
+        if (p.bounds.max.x > q.bounds.min.x + E && p.bounds.min.x < q.bounds.max.x - E && p.bounds.max.y > q.bounds.min.y + E && p.bounds.min.y < q.bounds.max.y - E) return true;
+      }
+    }
+    return false;
+  }
+  tryMove(dx, dy) {
+    const b = this.cur; Body.translate(b, { x: dx, y: dy });
+    if (this.hits(b)) { Body.translate(b, { x: -dx, y: -dy }); return false; }
+    return true;
   }
   rotate() {
     if (!this.cur || this.cur.torre.locked || this.state() !== 'play') return;
     const b = this.cur;
     Body.rotate(b, Math.PI / 2);
-    // se girar faria a peça entrar em outra, desfaz o giro (evita "pulos" por sobreposição)
-    if (Matter.Query && Matter.Query.collides) {
-      const others = this.placed.concat([this.base]);
-      if (Matter.Query.collides(b, others).length) { Body.rotate(b, -Math.PI / 2); return; }
-    }
+    if (this.hits(b)) { Body.rotate(b, -Math.PI / 2); return; }   // não gira se for entrar em outra peça
     beep(520, .05, 'square', .02);
   }
   state() { return this._state || 'play'; }
-  lockCur() {
-    const b = this.cur; b.torre.locked = true; this.placed.push(b); this.cur = null;
-    // tira a velocidade lateral/giro herdada do controle: a peça pousa e fica, sem deslizar
-    Body.setVelocity(b, { x: 0, y: 0 });
-    Body.setAngularVelocity(b, 0);
-    if (this.cement) { this.cement = false; Body.setStatic(b, true); this.pop('Cimentado!', '#cfd8e8'); }
+  /* move a peça atual: encaixe lateral em "travas" + queda; ao tocar em algo, pousa */
+  stepCur() {
+    const b = this.cur, tch = this.touch;
+    const down = held(keysDown, this.ctrl.down) || (tch && tch.down);
+    const fall = down ? FALL_FAST : (this.fastLeft > 0 ? FALL * SPELL_MULT : FALL);
+    let bd = b.bounds; const w = bd.max.x - bd.min.x;
+    this.tx = clamp(this.tx, 4 + w / 2, WW - 4 - w / 2);
+    const tl = clamp(Math.round((this.tx - w / 2 - WW / 2) / GRID) * GRID + WW / 2, 4, WW - 4 - w);
+    let dx = clamp(tl - bd.min.x, -MOVE_MAX, MOVE_MAX);
+    if (Math.abs(dx) > .01 && !this.tryMove(dx, 0)) { const h = Math.sign(dx) * Math.min(Math.abs(dx), 1.5); this.tryMove(h, 0); }
+    let rem = fall;
+    while (rem > 0) {
+      const d = Math.min(rem, 1.5);
+      if (this.tryMove(0, d)) { rem -= d; continue; }
+      for (const f of [.75, .4, .2, .1]) if (this.tryMove(0, f)) break;
+      this.land(); return;
+    }
+  }
+  /* pouso: calcula o apoio. Se o centro de massa (com o peso de tudo que está em cima) passa da borda do apoio, a peça cai */
+  supportOf(b) {
+    const set = new Set(); let lo = 1e9, hi = -1e9;
+    for (const p of partsOf(b)) for (const o of this.placed.concat([this.base])) {
+      if (o === b) continue;
+      for (const q of partsOf(o)) {
+        if (Math.abs(q.bounds.min.y - p.bounds.max.y) > 1.6) continue;
+        const a = Math.max(p.bounds.min.x, q.bounds.min.x), z = Math.min(p.bounds.max.x, q.bounds.max.x);
+        if (z - a > 1) { lo = Math.min(lo, a); hi = Math.max(hi, z); if (o !== this.base) set.add(o); }
+      }
+    }
+    return { bodies: Array.from(set), hull: hi > lo ? [lo, hi] : null };
+  }
+  chainCheck(N) {
+    const anc = [], seen = new Set(), q = [N];
+    while (q.length) { const x = q.pop(); if (seen.has(x)) continue; seen.add(x); anc.push(x); for (const s_ of x.torre.sup) if (this.placed.includes(s_)) q.push(s_); }
+    const memo = new Map();
+    const load = X => {
+      if (memo.has(X)) return memo.get(X);
+      let m = 0, mx = 0; for (const p of partsOf(X)) { m++; mx += (p.bounds.min.x + p.bounds.max.x) / 2; }
+      for (const Y of this.placed) {
+        if (Y.torre.glue || Y.torre.sup.indexOf(X) < 0) continue;
+        const L = load(Y), k = 1 / Y.torre.sup.length; m += L.m * k; mx += L.mx * k;
+      }
+      const r = { m, mx }; memo.set(X, r); return r;
+    };
+    const bad = [];
+    for (const X of anc) {
+      const t_ = X.torre; if (t_.fixed || t_.glue) continue;
+      if (!t_.hull) { bad.push({ X, dir: 0 }); continue; }
+      const L = load(X), c = L.mx / L.m, h = t_.hull;
+      if (c <= h[0] + .5 || c >= h[1] - .5) bad.push({ X, dir: c > (h[0] + h[1]) / 2 ? 1 : -1 });
+    }
+    return bad;
+  }
+  topple(bad) {
+    const rel = new Set();
+    const add = X => { if (rel.has(X)) return; rel.add(X); for (const Y of this.placed) if (Y.torre.sup.indexOf(X) >= 0) add(Y); };
+    for (const o of bad) add(o.X);
+    for (const X of rel) {
+      X.torre.sup = []; X.torre.hull = null; X.torre.fixed = false; X.torre.calmN = 0; X.torre.age = 0;
+      Body.setStatic(X, false); Body.setVelocity(X, { x: 0, y: 0 }); Body.setAngularVelocity(X, 0);
+      if (!this.live.includes(X)) this.live.push(X);
+    }
+    for (const o of bad) if (o.dir) { Body.setVelocity(o.X, { x: o.dir * .6, y: 0 }); Body.setAngularVelocity(o.X, o.dir * .012); }
+    this.pop('Sem apoio!', '#ff8fab'); sfx.lose();
+  }
+  freeze(b) {
+    Body.setStatic(b, true); b.torre.fixed = true; b.torre.sup = []; b.torre.hull = null;
+    const i = this.live.indexOf(b); if (i >= 0) this.live.splice(i, 1);
+  }
+  land() {
+    const b = this.cur; this.cur = null; b.torre.locked = true;
+    Body.setVelocity(b, { x: 0, y: 0 }); Body.setAngularVelocity(b, 0); Body.setPosition(b, { x: b.position.x, y: b.position.y });
+    const sp = this.supportOf(b); b.torre.sup = sp.bodies; b.torre.hull = sp.hull;
+    b.torre.flash = 1; this.placed.push(b); Composite.add(this.world, b); Body.setStatic(b, true);
+    if (this.cement) { this.cement = false; b.torre.glue = true; b.torre.fixed = true; this.pop('Cimentado!', '#cfd8e8'); }
+    else { const bad = this.chainCheck(b); if (bad.length) this.topple(bad); }
     this.spawnIn = .6; this.setMood('happy', .7); sfx.land();
     SAVE.blocks++; addCoins(1); this.earned += 1;
   }
   /* linha de pavimento: ao alcançá-la, a torre vira chão firme (blocos fixos) e a próxima linha sobe */
   pave() {
-    for (const b of this.placed) if (!b.isStatic) Body.setStatic(b, true);
+    for (const b of this.placed) { if (!b.isStatic) Body.setStatic(b, true); b.torre.fixed = true; b.torre.sup = []; }
+    this.live = [];
     this.cpLevel = this.height + CP_STEP; this.cpFlash = 1; this.tools++;
     if (this.lives < LIVES) this.lives++;
     addCoins(10); this.earned += 10; sfx.rec(); this.setMood('happy', 1.2);
@@ -574,51 +654,44 @@ class Arena {
     else this.runEvent(dt);
     if (this.fastLeft > 0) this.fastLeft -= dt;
     if (this.flash > 0) this.flash -= dt;
-    if (this.windAmt) for (const b of this.placed) if (!b.isStatic) Body.applyForce(b, b.position, { x: this.windAmt * WIND_FORCE * b.mass, y: 0 });
+    if (this.windAmt) for (const b of this.live) Body.applyForce(b, b.position, { x: this.windAmt * WIND_FORCE * b.mass, y: 0 });
     this.streaks = this.streaks.filter(q => { q.x += q.sp * 60 * dt; return q.x > -140 && q.x < W + 140; });
     // peça atual
     if (this.cur && !this.cur.torre.locked) {
       const dir = (held(keysDown, this.ctrl.right) ? 1 : 0) - (held(keysDown, this.ctrl.left) ? 1 : 0);
-      const tch = this.touch;
-      const base = this.fastLeft > 0 ? FALL * SPELL_MULT : FALL;
-      const fall = (held(keysDown, this.ctrl.down) || (tch && tch.down)) ? Math.max(FALL_FAST, base * 1.4) : base;
-      const vx = tch ? clamp(this.tx - this.cur.position.x, -MOVE_MAX, MOVE_MAX) : dir * MOVE;
-      Body.setVelocity(this.cur, { x: vx + this.windAmt * .6, y: fall });
-      Body.setAngularVelocity(this.cur, 0);
+      this.tx += dir * MOVE + this.windAmt * WIND_PUSH;
       const bd = this.cur.bounds;
-      if (bd.min.x < 4) Body.translate(this.cur, { x: 4 - bd.min.x, y: 0 });
-      if (bd.max.x > WW - 4) Body.translate(this.cur, { x: WW - 4 - bd.max.x, y: 0 });
-      // moedas
       for (const k of this.coinsField) {
         if (k.x > bd.min.x - 9 && k.x < bd.max.x + 9 && k.y > bd.min.y - 9 && k.y < bd.max.y + 9) {
           k.got = true; addCoins(3); this.earned += 3; sfx.coin(); this.pop('+3', '#ffd166');
         }
       }
       this.coinsField = this.coinsField.filter(k => !k.got);
-      if (this.cur.position.y > BASE_Y + 600) this.loseCur();
+      this.stepCur();
+      if (this.cur && this.cur.position.y > BASE_Y + 600) this.loseCur();
     }
     Engine.update(this.engine, 1000 / 60);
-    // trava de segurança: nenhuma peça pousada pode "disparar" nem girar rápido demais
-    for (const b of this.placed) {
-      // "assentar": movimento minúsculo (tremedeira do motor) vira repouso total, a não ser que o vento esteja soprando
-      if (!this.windAmt && b.speed < .15 && Math.abs(b.angularSpeed || 0) < .003) { Body.setVelocity(b, { x: 0, y: 0 }); Body.setAngularVelocity(b, 0); continue; }
+    for (let i = Math.max(0, this.placed.length - 4); i < this.placed.length; i++) { const t_ = this.placed[i].torre; if (t_.flash > 0) t_.flash = Math.max(0, t_.flash - dt * 3.5); }
+    // peças que desabaram: quando param (ou passam de 6 s), viram chão firme; assim nada fica "tremendo"
+    for (const b of this.live.slice()) {
+      b.torre.age++;
+      const calm = b.speed < .2 && Math.abs(b.angularSpeed || 0) < .004;
+      b.torre.calmN = calm ? b.torre.calmN + 1 : 0;
       if (b.speed > 14) { const k = 14 / b.speed; Body.setVelocity(b, { x: b.velocity.x * k, y: b.velocity.y * k }); }
-      if (Math.abs(b.angularVelocity || 0) > .2) Body.setAngularVelocity(b, Math.sign(b.angularVelocity) * .2);
+      if (b.torre.calmN > 25 || b.torre.age > 360) this.freeze(b);
     }
-    // blocos antigos viram chão firme: só os últimos KEEP_LIVE continuam com física
-    for (let i = 0; i < this.placed.length - KEEP_LIVE; i++) { const b = this.placed[i]; if (!b.isStatic && b.speed < 1) Body.setStatic(b, true); }
     // peças caídas e altura da torre
     let top = BASE_Y, wob = 0;
     for (const b of this.placed.slice()) {
       if (b.position.y > BASE_Y + 600) {
-        Composite.remove(this.world, b); this.placed.splice(this.placed.indexOf(b), 1);
+        Composite.remove(this.world, b); this.placed.splice(this.placed.indexOf(b), 1); const li = this.live.indexOf(b); if (li >= 0) this.live.splice(li, 1);
         this.lives--; this.setMood('sad', 1.2); sfx.lose(); this.pop('Caiu!', '#ff8fab'); continue;
       }
       wob += b.speed + Math.abs(b.angularSpeed) * 20;
       if (b.speed < .6 && b.position.y < BASE_Y + 50) top = Math.min(top, b.bounds.min.y);
     }
     this.height = Math.max(0, BASE_Y - top);
-    this.calm = this.placed.every(b => b.isStatic || b.speed < 1);
+    this.calm = this.live.length === 0;
     if (this.cpFlash > 0) this.cpFlash -= dt;
     if (this.height >= this.cpLevel && this.calm && this.cur) this.pave();
     this.wobble += (wob - this.wobble) * .08;
@@ -630,7 +703,7 @@ class Arena {
     this.camY += (Math.min(CAM0, BASE_Y - this.height - WH * .47) - this.camY) * .05;
     if (!this.cur) {
       this.spawnIn -= dt;
-      if (this.spawnIn <= 0 && this.lives > 0) {
+      if (this.spawnIn <= 0 && this.lives > 0 && this.live.length === 0) {
         if (this.limit && this.spawned >= this.limit) { if (this.endIn === null) this.endIn = 2.8; }
         else this.spawn();
       }
@@ -675,6 +748,22 @@ class Arena {
   }
 
 
+  /* faixa-guia: mostra a coluna da peça e onde ela vai pousar (como no 99 Bricks) */
+  dropGap() {
+    const b = this.cur; let gap = 1e9;
+    for (const p of partsOf(b)) for (const o of this.placed.concat([this.base])) for (const q of partsOf(o)) {
+      if (p.bounds.max.x > q.bounds.min.x + .6 && p.bounds.min.x < q.bounds.max.x - .6 && q.bounds.min.y >= p.bounds.max.y - .6) gap = Math.min(gap, q.bounds.min.y - p.bounds.max.y);
+    }
+    return gap;
+  }
+  drawGuide(c) {
+    const b = this.cur; if (!b) return;
+    const bd = b.bounds, gap = this.dropGap(), y0 = this.camY - 40, y1 = gap < 1e8 ? bd.max.y + gap : this.camY + WH + 40;
+    const g = c.createLinearGradient(0, y0, 0, y1);
+    g.addColorStop(0, 'rgba(190,240,255,0)'); g.addColorStop(.35, 'rgba(190,240,255,.10)'); g.addColorStop(1, 'rgba(190,240,255,.22)');
+    c.fillStyle = g; c.fillRect(bd.min.x, y0, bd.max.x - bd.min.x, y1 - y0);
+    if (gap < 1e8) { c.fillStyle = 'rgba(220,250,255,.55)'; c.fillRect(bd.min.x, y1 - 2, bd.max.x - bd.min.x, 2); }
+  }
   drawCheckpoint(c) {
     const y = BASE_Y - this.cpLevel, d = 28, n = Math.ceil(WW / d);
     c.save();
@@ -704,14 +793,16 @@ class Arena {
       c.save(); c.shadowColor = '#ffd166'; c.shadowBlur = 10; c.fillStyle = '#ffc300'; c.strokeStyle = '#a86b00'; c.lineWidth = 2;
       c.beginPath(); c.ellipse(k.x, yy, 3 + 8 * sc, 11, 0, 0, 7); c.fill(); c.stroke(); c.restore();
     }
+    this.drawGuide(c, L);
     const all = this.cur ? this.placed.concat([this.cur]) : this.placed;
     for (const b of all) {
       const ps = b.parts.length > 1 ? b.parts.slice(1) : b.parts;
       for (const p of ps) {
         drawPart(c, p, b.torre.type, L.blocks, this.t);
-        if (b.isStatic || (b === this.cur && this.cement)) {
+        if (b.torre.flash > 0) { c.save(); c.beginPath(); p.vertices.forEach((v, i) => i ? c.lineTo(v.x, v.y) : c.moveTo(v.x, v.y)); c.closePath(); c.fillStyle = 'rgba(255,255,255,' + b.torre.flash * .75 + ')'; c.fill(); c.restore(); }
+        if (b.torre.glue || (b === this.cur && this.cement)) {
           c.save(); c.beginPath(); p.vertices.forEach((v, i) => i ? c.lineTo(v.x, v.y) : c.moveTo(v.x, v.y)); c.closePath();
-          if (b.isStatic) { c.fillStyle = 'rgba(225,232,245,.2)'; c.fill(); }
+          if (b.torre.glue) { c.fillStyle = 'rgba(225,232,245,.22)'; c.fill(); }
           else { c.shadowColor = '#ffffff'; c.shadowBlur = 24; c.strokeStyle = 'rgba(255,255,255,.95)'; c.lineWidth = 5; c.stroke(); }
           c.restore();
         }
