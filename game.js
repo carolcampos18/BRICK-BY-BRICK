@@ -1092,99 +1092,162 @@ function finish() {
   $('oMenu').onclick = () => { stopLoop(); goMenu(); };
 }
 
-/* ====== DUELO (por turnos): cada um monta a sua torre com a MESMA sequência de peças e eventos ====== */
+/* ====== DUELO ENTRE AMIGOS (Supabase): você joga primeiro, depois é a vez do amigo ======
+   Mesma semente = mesmas peças, vento e feitiços para os dois. O servidor guarda os resultados,
+   decide o vencedor e libera o prêmio (50 ao vencedor, 30 para cada no empate). */
 const newSeed = () => (Math.random() * 2147483647) >>> 0;
 const cmp = (x, y) => { const hx = Math.round(x.h / 5), hy = Math.round(y.h / 5); if (hx !== hy) return hx > hy ? 1 : -1; return x.l === y.l ? 0 : x.l > y.l ? 1 : -1; };
-function nameIn(id, fb) { return $(id).value.trim().slice(0, 12) || fb; }
-function openDuel() { $('nameA').value = SAVE.name || ''; $('nameB').value = SAVE.nameB || ''; show('duel'); }
-function duelStart(kind, names, chal) {
-  Game.duel = { kind, seed: chal ? chal.seed : newSeed(), names, res: [null, null], turn: 0, chal: chal || null };
-  duelRun(kind === 'recv' ? 1 : 0);
+let friends = [], duels = [], playerOk = false, claiming = false;
+const firstName = n => String(n || 'Amigo').trim().split(/\s+/)[0].slice(0, 14);
+const myName = () => { const m = authUser && authUser.user_metadata || {}; return (m.full_name || m.name) ? firstName(m.full_name || m.name) : (SAVE.name || 'Você'); };
+const pById = id => friends.find(f => f.id === id) || { id, name: 'Amigo', avatar: null };
+const expired = d => d.status === 'pending' && new Date(d.expires_at) <= Date.now();
+function timeLeft(iso) { const ms = new Date(iso) - Date.now(); if (ms <= 0) return ''; const h = Math.floor(ms / 36e5), m = Math.floor(ms % 36e5 / 6e4); return h ? h + ' h ' + m + ' min' : m + ' min'; }
+const avStyle = u => /^https:\/\//.test(u || '') ? ' style="background-image:url(\'' + esc(encodeURI(u)) + '\')"' : '';
+
+async function upsertPlayer() {
+  const m = authUser.user_metadata || {};
+  const name = String(m.full_name || m.name || (authUser.email || '').split('@')[0] || 'Jogador').trim().slice(0, 24) || 'Jogador';
+  const { error } = await sb.from('players').upsert({ id: authUser.id, name, avatar: m.avatar_url || m.picture || null, updated_at: new Date().toISOString() });
+  if (error) throw error; playerOk = true;
 }
-function duelLocal() {
-  SAVE.name = $('nameA').value.trim().slice(0, 12); SAVE.nameB = $('nameB').value.trim().slice(0, 12); persist();
-  duelStart('local', [nameIn('nameA', 'Jogador 1'), nameIn('nameB', 'Jogador 2')]);
+function openDuel() { show('duel'); duelRefresh(); }
+async function duelRefresh(keep) {
+  const on = !!sb && !!authUser;
+  $('duelGuest').classList.toggle('hidden', on); $('duelMain').classList.toggle('hidden', !on);
+  $('duelGuestTxt').textContent = sb ? 'Para duelar com amigos, entre com o Google.' : 'O login não está disponível neste momento.';
+  $('btnDuelLogin').classList.toggle('hidden', !sb);
+  if (!on) return;
+  $('duelMsg').textContent = 'Carregando…';
+  try {
+    if (!playerOk) await upsertPlayer();
+    const [p, d] = await Promise.all([
+      sb.from('players').select('id,name,avatar').order('name').limit(500),
+      sb.from('duels').select('*').order('created_at', { ascending: false }).limit(20)]);
+    if (p.error) throw p.error; if (d.error) throw d.error;
+    friends = p.data || []; duels = d.data || [];
+    $('duelMsg').textContent = typeof keep === 'string' ? keep : '';
+    renderDuels(); renderFriends(); claimAll();
+  } catch (e) { console.warn(e); $('duelMsg').textContent = 'Não foi possível carregar os duelos agora. Tente atualizar.'; }
 }
-function duelSend() {
-  SAVE.name = $('nameA').value.trim().slice(0, 12); persist();
-  duelStart('send', [nameIn('nameA', 'Jogador 1'), '']);
+function renderDuels() {
+  const me = authUser.id, el = $('duelList');
+  const rank = d => (d.status === 'pending' && d.opponent === me && !expired(d)) ? 0 : (d.status === 'pending' && !expired(d)) ? 1 : 2;
+  const list = duels.slice().sort((x, y) => rank(x) - rank(y));
+  if (!list.length) { el.innerHTML = '<div class="empty-note">Nenhum duelo ainda. Desafie um amigo abaixo!</div>'; return; }
+  el.innerHTML = list.map(d => {
+    const mine = d.challenger === me, other = pById(mine ? d.opponent : d.challenger), nm = esc(other.name);
+    let info, btn = '';
+    if (d.status === 'pending' && expired(d)) info = '<b>' + nm + '</b><span>Expirado sem resposta</span>';
+    else if (d.status === 'pending' && mine) info = '<b>Aguardando ' + nm + '</b><span>Sua torre: ' + fmt(d.ch_h) + ' · expira em ' + timeLeft(d.expires_at) + '</span>';
+    else if (d.status === 'pending') { info = '<b>' + nm + ' te desafiou!</b><span>Torre a bater: <span class="gold">' + fmt(d.ch_h) + '</span> · expira em ' + timeLeft(d.expires_at) + '</span>'; btn = '<button class="btn mini" data-play="' + esc(d.id) + '">Jogar</button>'; }
+    else {
+      const my = mine ? [d.ch_h, d.ch_l] : [d.op_h, d.op_l], his = mine ? [d.op_h, d.op_l] : [d.ch_h, d.ch_l];
+      const res = d.winner === null ? 'Empate · +30' : d.winner === me ? 'Você venceu · +50' : 'Você perdeu';
+      info = '<b>' + fmt(my[0]) + ' × ' + fmt(his[0]) + ' · ' + nm + '</b><span class="gold">' + res + '</span>';
+    }
+    return '<div class="frow"><div class="av"' + avStyle(other.avatar) + '></div><div class="tx">' + info + '</div>' + btn + '</div>';
+  }).join('');
+  el.querySelectorAll('[data-play]').forEach(b => b.onclick = () => duelAccept(b.dataset.play));
 }
-function duelRun(i) {
-  const d = Game.duel, mine = !(d.kind === 'local' && i === 1);
-  d.turn = i;
-  startGame('duel', { seed: d.seed, limit: DUEL_PIECES, name: d.names[i], look: mine ? lookMine : lookRival });
+function renderFriends() {
+  const me = authUser.id, q = $('friendQ').value.trim().toLowerCase(), el = $('friendList');
+  const all = friends.filter(f => f.id !== me), list = all.filter(f => !q || f.name.toLowerCase().includes(q)).slice(0, 60);
+  if (!all.length) { el.innerHTML = '<div class="empty-note">Ainda não há amigos cadastrados. Peça para eles entrarem com o Google!</div>'; return; }
+  if (!list.length) { el.innerHTML = '<div class="empty-note">Ninguém com esse nome.</div>'; return; }
+  const waiting = new Set(duels.filter(d => d.challenger === me && d.status === 'pending' && !expired(d)).map(d => d.opponent));
+  el.innerHTML = list.map(f => '<div class="frow"><div class="av"' + avStyle(f.avatar) + '></div><div class="tx"><b>' + esc(f.name) + '</b></div>' +
+    (waiting.has(f.id) ? '<button class="btn alt mini" disabled>Aguardando</button>' : '<button class="btn mini" data-ch="' + esc(f.id) + '">Desafiar</button>') + '</div>').join('');
+  el.querySelectorAll('[data-ch]').forEach(b => b.onclick = () => duelChallenge(pById(b.dataset.ch)));
+}
+// recebe os prêmios dos duelos já concluídos (o servidor paga uma única vez por duelo)
+async function claimAll() {
+  if (claiming || !authUser) return; claiming = true;
+  try {
+    const me = authUser.id; let total = 0;
+    for (const d of duels) {
+      const key = d.challenger === me ? 'ch_claimed' : 'op_claimed';
+      if (d.status !== 'done' || d[key]) continue;
+      const { data, error } = await sb.rpc('claim_duel', { p_id: d.id });
+      if (error) continue; d[key] = true; total += +data || 0;
+    }
+    if (total > 0) { addCoins(total); refreshWallet(); sfx.rec(); $('duelMsg').textContent = '+' + total + ' moedas dos seus duelos!'; }
+  } catch (e) { console.warn(e); }
+  claiming = false;
+}
+
+function duelChallenge(f) {
+  Game.duel = { kind: 'send', seed: newSeed(), other: f, row: null };
+  duelRun();
+}
+async function duelAccept(id) {
+  const row = duels.find(d => d.id === id); if (!row) return;
+  $('duelMsg').textContent = 'Abrindo duelo…';
+  try {
+    const { data, error } = await sb.rpc('start_duel', { p_id: id });
+    if (error) throw error;
+    if (data.status === 'done') {   // já tinha começado antes e saiu: conta como derrota
+      return duelRefresh('Você já tinha começado esse duelo e saiu no meio, então ele contou como derrota.');
+    }
+    $('duelMsg').textContent = '';
+    Game.duel = { kind: 'recv', seed: row.seed, other: pById(row.challenger), row };
+    duelRun();
+  } catch (e) { console.warn(e); duelRefresh('Esse duelo não está mais disponível (pode ter expirado).'); }
+}
+function duelRun() {
+  const d = Game.duel;
+  startGame('duel', { seed: d.seed, limit: DUEL_PIECES, name: myName(), look: lookMine });
   Game.paused = true;
-  const target = d.kind === 'recv' ? '<p>Torre a bater: <b class="gold">' + fmt(d.chal.h) + '</b> (' + esc(d.chal.n) + ')</p>' : '';
-  showOverlay('<h2>Vez de ' + esc(d.names[i]) + '</h2><p>' + DUEL_PIECES + ' peças. Mesma sequência, vento e feitiços para todos.</p>' + target +
-    '<button class="btn" id="oGo">Começar</button><button class="btn alt" id="oMenu">Cancelar</button>');
+  const recv = d.kind === 'recv', who = esc(firstName(d.other.name));
+  showOverlay('<h2>' + (recv ? 'Duelo contra ' + who : 'Desafiar ' + who) + '</h2><p>' + DUEL_PIECES + ' peças. Mesma sequência, vento e feitiços para os dois.</p>' +
+    (recv ? '<p>Torre a bater: <b class="gold">' + fmt(d.row.ch_h) + '</b></p><p class="sub">Você só joga uma vez: se sair no meio, conta como derrota.</p>'
+          : '<p class="sub">Você joga primeiro. Depois ' + who + ' tem 1 dia para jogar as mesmas peças.</p>') +
+    '<button class="btn" id="oGo">Começar</button><button class="btn alt" id="oMenu">' + (recv ? 'Sair' : 'Cancelar') + '</button>');
   $('oGo').onclick = () => { $('overlay').classList.add('hidden'); Game.paused = false; Game.last = performance.now(); };
-  $('oMenu').onclick = () => { stopLoop(); goMenu(); };
+  $('oMenu').onclick = () => { stopLoop(); openDuel(); };
 }
 function duelFinish(a) {
   const d = Game.duel, res = { h: Math.round(a.height), l: a.lives };
-  d.res[d.turn] = res;
-  if (d.kind === 'local') {
-    if (d.turn === 0) {
-      showOverlay('<h2>' + esc(d.names[0]) + '</h2><p>Torre: <b class="gold">' + fmt(res.h) + '</b></p><p>Agora é a vez de <b>' + esc(d.names[1]) + '</b>, com as mesmas peças!</p>' +
-        '<button class="btn" id="oNext">Passar para ' + esc(d.names[1]) + '</button><button class="btn alt" id="oMenu">Cancelar</button>');
-      $('oNext').onclick = () => duelRun(1);
-      $('oMenu').onclick = () => { stopLoop(); goMenu(); };
-      return;
-    }
-    return duelResult(d.names, d.res);
-  }
-  if (d.kind === 'recv') return duelResult([d.chal.n, d.names[1]], [{ h: d.chal.h, l: d.chal.l }, res]);
-  const link = makeLink(d, res);
-  showOverlay('<h2>Sua torre: ' + fmt(res.h) + '</h2><p>Envie o link para um amigo tentar bater!</p>' +
-    '<button class="btn" id="oShare">Enviar desafio</button><button class="btn alt" id="oCopy">Copiar link</button><button class="btn alt" id="oMenu">Menu</button>');
-  $('oShare').onclick = () => shareLink(link, res.h);
-  $('oCopy').onclick = () => copyLink(link, $('oCopy'));
-  $('oMenu').onclick = () => { stopLoop(); goMenu(); };
+  duelSubmit(d, res);
 }
-function duelResult(names, res) {
-  const c = cmp(res[0], res[1]), d = Game.duel; sfx.win();
-  const side = (i, w) => '<div class="' + (w ? 'win' : '') + '"><span>' + (w ? '✦ ' : '') + esc(names[i]) + '</span><b>' + fmt(res[i].h) + '</b></div>';
-  showOverlay('<h2>' + (c === 0 ? 'Empate!' : esc(names[c > 0 ? 0 : 1]) + ' venceu!') + '</h2>' +
-    '<div class="vs">' + side(0, c > 0) + '<em>×</em>' + side(1, c < 0) + '</div>' + (c === 0 ? '<p>Mesma altura e mesmas vidas.</p>' : '') +
-    '<button class="btn" id="oAgain">' + (d.kind === 'recv' ? 'Desafiar de volta' : 'Revanche') + '</button><button class="btn alt" id="oMenu">Menu</button>');
-  $('oAgain').onclick = () => { if (d.kind === 'recv') duelStart('send', [d.names[1], '']); else duelStart('local', d.names); };
-  $('oMenu').onclick = () => { stopLoop(); goMenu(); };
-}
-
-/* desafio à distância por link (sem cadastro): o link leva a semente da partida e o resultado de quem desafiou */
-function makeLink(d, res) {
-  const p = { v: 1, sd: d.seed, n: d.names[0], h: res.h, l: res.l };
-  const b64 = btoa(unescape(encodeURIComponent(JSON.stringify(p)))).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
-  return location.href.split('#')[0] + '#d=' + b64;
-}
-function readLink() {
-  const m = /^#d=([\w-]+)/.exec(location.hash); if (!m) return null;
+async function duelSubmit(d, res) {
+  showOverlay('<h2>Salvando…</h2><p>Sua torre: <b class="gold">' + fmt(res.h) + '</b></p>');
+  const who = esc(firstName(d.other.name));
   try {
-    const p = JSON.parse(decodeURIComponent(escape(atob(m[1].replace(/-/g, '+').replace(/_/g, '/')))));
-    if (p && p.v === 1 && Number.isFinite(+p.sd) && Number.isFinite(+p.h)) return { seed: +p.sd >>> 0, n: String(p.n || 'Amigo').slice(0, 12), h: clamp(+p.h, 0, 6000), l: clamp(+p.l | 0, 0, LIVES) };
-  } catch (e) {}
-  return null;
+    if (d.kind === 'send') {
+      const { error } = await sb.from('duels').insert({ challenger: authUser.id, opponent: d.other.id, seed: d.seed, pieces: DUEL_PIECES, ch_h: res.h, ch_l: res.l });
+      if (error) throw error;
+      showOverlay('<h2>Desafio enviado!</h2><p>Sua torre: <b class="gold">' + fmt(res.h) + '</b></p><p>' + who + ' tem 1 dia para jogar as mesmas peças. O resultado e as moedas aparecem na tela Duelo.</p>' +
+        '<button class="btn" id="oDuels">Ver duelos</button><button class="btn alt" id="oMenu">Menu</button>');
+      $('oDuels').onclick = () => { stopLoop(); openDuel(); };
+      $('oMenu').onclick = () => { stopLoop(); goMenu(); };
+    } else {
+      const { data, error } = await sb.rpc('submit_duel', { p_id: d.row.id, p_h: res.h, p_l: res.l });
+      if (error) throw error;
+      let prize = 0;
+      try { const c = await sb.rpc('claim_duel', { p_id: d.row.id }); if (!c.error) prize = +c.data || 0; } catch (e) {}
+      if (prize > 0) { addCoins(prize); refreshWallet(); }
+      duelResult(d, data, prize);
+    }
+  } catch (e) {
+    console.warn(e);
+    showOverlay('<h2>Não deu para salvar</h2><p>Sua torre: <b class="gold">' + fmt(res.h) + '</b></p><p>Confira a conexão e tente de novo.</p>' +
+      '<button class="btn" id="oRetry">Tentar de novo</button><button class="btn alt" id="oMenu">Menu</button>');
+    $('oRetry').onclick = () => duelSubmit(d, res);
+    $('oMenu').onclick = () => { stopLoop(); goMenu(); };
+  }
 }
-async function shareLink(link, h) {
-  const text = 'Bata a minha torre de ' + fmt(h) + ' no Brick by Brick!';
-  try { if (navigator.share) { await navigator.share({ title: 'Brick by Brick', text, url: link }); return; } } catch (e) { if (e && e.name === 'AbortError') return; }
-  copyLink(link, $('oCopy'));
-}
-async function copyLink(link, btn) {
-  try { await navigator.clipboard.writeText(link); if (btn) btn.textContent = 'Link copiado ✓'; }
-  catch (e) { window.prompt('Copie o link do desafio:', link); }
-}
-function showChallenge(ch) {
-  const m = $('modal');
-  m.innerHTML = '<div class="panel"><h2>Desafio!</h2><p><b>' + esc(ch.n) + '</b> montou uma torre de <b class="gold">' + fmt(ch.h) + '</b>. Consegue bater?</p>' +
-    '<input id="nameRecv" maxlength="12" placeholder="Seu nome" value="' + esc(SAVE.name || '') + '"><button class="btn" id="oAccept">Aceitar desafio</button><button class="btn alt" id="oDecline">Agora não</button></div>';
-  m.classList.remove('hidden');
-  const clear = () => { m.classList.add('hidden'); try { history.replaceState(null, '', location.href.split('#')[0]); } catch (e) {} };
-  $('oDecline').onclick = clear;
-  $('oAccept').onclick = () => {
-    const me = $('nameRecv').value.trim().slice(0, 12) || 'Você'; SAVE.name = $('nameRecv').value.trim().slice(0, 12); persist(); clear();
-    duelStart('recv', [ch.n, me], ch);
-  };
+function duelResult(d, row, prize) {
+  const c = row.winner === null ? 0 : row.winner === row.challenger ? 1 : -1; sfx.win();
+  const names = [firstName(d.other.name), myName()], res = [{ h: row.ch_h }, { h: row.op_h }];
+  const side = (i, w) => '<div class="' + (w ? 'win' : '') + '"><span>' + (w ? '✦ ' : '') + esc(names[i]) + '</span><b>' + fmt(res[i].h) + '</b></div>';
+  showOverlay('<h2>' + (c === 0 ? 'Empate!' : c < 0 ? 'Você venceu!' : esc(names[0]) + ' venceu!') + '</h2>' +
+    '<div class="vs">' + side(0, c > 0) + '<em>×</em>' + side(1, c < 0) + '</div>' +
+    (prize > 0 ? '<p>Prêmio: <b class="gold">+' + prize + ' moedas</b></p>' : '<p>Boa tentativa! Na próxima você leva.</p>') +
+    '<button class="btn" id="oAgain">Desafiar de volta</button><button class="btn alt" id="oDuels">Ver duelos</button><button class="btn alt" id="oMenu">Menu</button>');
+  $('oAgain').onclick = () => duelChallenge(d.other);
+  $('oDuels').onclick = () => { stopLoop(); openDuel(); };
+  $('oMenu').onclick = () => { stopLoop(); goMenu(); };
 }
 
 function showOverlay(html) { const o = $('overlay'); o.innerHTML = '<div class="panel">' + html + '</div>'; o.classList.remove('hidden'); }
@@ -1193,7 +1256,8 @@ function setPause(p) {
   Game.paused = p;
   if (p) {
     for (const a of Game.arenas) a.touch = null;
-    showOverlay('<h2>Pausado</h2><button class="btn" id="oResume">Continuar</button><button class="btn alt" id="oMenu">Sair para o menu</button>');
+    const rv = Game.mode === 'duel' && Game.duel && Game.duel.kind === 'recv';
+    showOverlay('<h2>Pausado</h2>' + (rv ? '<p class="sub">Se sair, o duelo conta como derrota.</p>' : '') + '<button class="btn" id="oResume">Continuar</button><button class="btn alt" id="oMenu">Sair para o menu</button>');
     $('oResume').onclick = () => setPause(false);
     $('oMenu').onclick = () => { stopLoop(); goMenu(); };
   } else { $('overlay').classList.add('hidden'); Game.last = performance.now(); }
@@ -1258,8 +1322,9 @@ window.addEventListener('blur', () => { keysDown.clear(); setPause(true); });
 window.addEventListener('contextmenu', e => e.preventDefault());
 $('btnSolo').onclick = () => startGame('solo');
 $('btnDuo').onclick = openDuel;
-$('btnDuelLocal').onclick = duelLocal;
-$('btnDuelSend').onclick = duelSend;
+$('btnDuelLogin').onclick = () => openProfile();
+$('btnDuelRefresh').onclick = () => duelRefresh();
+$('friendQ').oninput = () => { if (authUser) renderFriends(); };
 $('btnShop').onclick = () => openShopTab('mascot');
 document.querySelectorAll('#nav button').forEach(b => b.onclick = () => { stopLoop(); go(b.dataset.go); });
 $('gPause').onclick = () => setPause(!Game.paused);
@@ -1325,7 +1390,6 @@ $('btnMute').onclick = toggleMute; $('gMute').onclick = toggleMute;
 })();
 
 refreshWallet();
-{ const ch = readLink(); if (ch) setTimeout(() => showChallenge(ch), 500); }
 window.__torre = { startGame, openShop, Game, SAVE, Arena, CAT, drawMascot, step(n){ for(let i=0;i<n;i++){ for(const a of Game.arenas) a.update(1/60); checkEnd(); if(Game.over) break; } for(const a of Game.arenas) a.render(); } };
 
 /* ====== LOGIN COM GOOGLE (Supabase) — opcional; sem config.js o jogo funciona como visitante ====== */
@@ -1375,11 +1439,11 @@ function initAuth() {
   renderAcct();
   if (!sb) return;
   $('btnGoogle').onclick = () => sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.origin + location.pathname } });
-  $('btnLogout').onclick = async () => { await sb.auth.signOut(); authUser = null; renderAcct(); };
+  $('btnLogout').onclick = async () => { await sb.auth.signOut(); authUser = null; playerOk = false; friends = []; duels = []; renderAcct(); };
   sb.auth.onAuthStateChange((ev, session) => {
     const u = session && session.user ? session.user : null;
     const first = u && (!authUser || authUser.id !== u.id);
-    authUser = u; renderAcct();
+    authUser = u; renderAcct(); if (first) playerOk = false;
     if (first) setTimeout(pullCloud, 0);   // fora do callback, como recomenda o Supabase
   });
 }

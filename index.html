@@ -52,7 +52,9 @@
   .xp i{display:block;height:100%;width:0;background:linear-gradient(90deg,#f6d489,var(--gold2));border-radius:99px}
 
   .screen{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;padding:calc(14px + env(safe-area-inset-top)) 16px 16px;gap:12px;overflow:auto}
-  .nav-screen{padding-bottom:calc(104px + env(safe-area-inset-bottom))}
+  .nav-screen{padding-bottom:calc(120px + env(safe-area-inset-bottom))}
+  .screen>*{flex-shrink:0}
+  .screen::after{content:"";flex:0 0 1px}
   .head{display:flex;align-items:center;justify-content:space-between;width:min(430px,100%)}
   .head h2{margin:0;font-size:40px;line-height:1;color:#f1fbf6}
 
@@ -145,6 +147,16 @@
   input::placeholder{color:rgba(156,196,182,.6)}
   .form{display:grid;gap:10px}
   .form label{display:grid;gap:6px;font-size:14px;color:var(--soft);font-weight:600}
+  .frow{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid rgba(170,215,198,.14)}
+  .frow:first-child{border-top:0}
+  .frow .tx{flex:1;min-width:0;line-height:1.25}
+  .frow .tx b{display:block;color:#f1fbf6;font-size:16px;overflow-wrap:anywhere}
+  .frow .tx span{color:var(--soft);font-size:13px}
+  .frow .tx .gold{color:var(--gold)}
+  .frow .av{width:38px;height:38px}
+  .btn.mini{height:42px;padding:0 16px;font-size:16px;border-radius:15px;box-shadow:0 3px 0 #a87420,0 8px 14px rgba(0,0,0,.3)}
+  .btn.alt.mini{box-shadow:0 3px 0 rgba(0,0,0,.32)}
+  .empty-note{color:var(--soft);font-size:15px;padding:6px 0}
   .vs{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;width:100%;padding:6px 0}
   .vs div{display:flex;flex-direction:column;gap:2px;align-items:center}
   .vs span{color:var(--soft);font-size:15px;font-weight:600}
@@ -204,16 +216,19 @@
 <div id="duel" class="screen nav-screen hidden">
   <div class="head"><h2 class="serif">Duelo</h2></div>
   <div class="glass card"><h3>Como funciona</h3><ul>
-    <li>Cada jogador monta a sua torre, <b>um de cada vez</b>, com <b>25 peças</b>.</li>
-    <li>A sequência de peças, o vento e os feitiços são <b>iguais para os dois</b>.</li>
-    <li>Vence a <b>torre mais alta</b> de pé no final. Empate: quem perdeu menos peças.</li></ul></div>
-  <div class="glass card form"><h3>No mesmo celular</h3>
-    <label>Jogador 1<input id="nameA" maxlength="12" placeholder="Jogador 1" autocomplete="off"></label>
-    <label>Jogador 2<input id="nameB" maxlength="12" placeholder="Jogador 2" autocomplete="off"></label>
-    <button class="btn big" id="btnDuelLocal" style="height:58px;font-size:22px">Começar duelo</button></div>
-  <div class="glass card form"><h3>À distância</h3>
-    <p style="margin:0;color:var(--soft);font-size:15px;line-height:1.4">Jogue primeiro e envie um link. Seu amigo joga as mesmas peças e vê quem ganhou.</p>
-    <button class="btn alt" id="btnDuelSend">Criar desafio</button></div>
+    <li>Escolha um <b>amigo</b> e monte a sua torre com <b>25 peças</b>.</li>
+    <li>Ele tem <b>1 dia</b> para jogar as <b>mesmas peças</b>, com o mesmo vento e feitiços.</li>
+    <li>Vence a <b>torre mais alta</b>. Vencedor: <b>+50 moedas</b>. Empate: <b>+30 para cada</b>.</li></ul></div>
+  <div class="glass card hidden" id="duelGuest">
+    <div class="sub" id="duelGuestTxt" style="margin-bottom:10px">Para duelar com amigos, entre com o Google.</div>
+    <button class="btn" id="btnDuelLogin" type="button" style="width:100%">Ir para o Perfil</button></div>
+  <div id="duelMain" class="hidden" style="display:contents">
+    <div class="sub" id="duelMsg" style="width:min(430px,100%);text-align:center;color:var(--gold);min-height:1px"></div>
+    <div class="glass card"><h3>Seus duelos</h3><div id="duelList"></div>
+      <button class="btn alt mini" id="btnDuelRefresh" type="button" style="margin-top:10px">Atualizar</button></div>
+    <div class="glass card"><h3>Desafiar um amigo</h3>
+      <input id="friendQ" placeholder="Buscar pelo nome" autocomplete="off" style="margin-bottom:6px"><div id="friendList"></div></div>
+  </div>
 </div>
 
 <!-- ============ PERFIL ============ -->
@@ -247,7 +262,7 @@
     <li><b>Arraste</b> o dedo para os lados para mover a peça.</li>
     <li><b>Toque</b> rápido na tela para girar.</li>
     <li><b>Deslize para baixo</b> e segure para a peça cair mais rápido.</li>
-    <li>No <b>Duelo</b>, os jogadores se revezam no mesmo celular.</li></ul></div>
+    <li>No <b>Duelo</b>, você escolhe um amigo, joga primeiro, e depois é a vez dele.</li></ul></div>
   <div class="glass card only-kbd"><h3>No teclado</h3><ul>
     <li><b>Sozinho:</b> <kbd>←</kbd> <kbd>→</kbd> mover · <kbd>↑</kbd> girar · <kbd>↓</kbd> descer.</li>
     <li>Também funciona com <kbd>A</kbd> <kbd>D</kbd> <kbd>W</kbd> <kbd>S</kbd> e a barra de espaço para girar.</li>
@@ -263,6 +278,7 @@
     <li>Uma <b>Nuvem de Tempestade</b> aparece e solta um raio: as peças caem <b>mais rápido</b> por alguns segundos.</li>
     <li>No <b>Duelo</b>, vence a torre mais alta depois de 25 peças.</li>
     <li>Gaste moedas na <b>Loja</b>: blocos, fundos, bases, chapéus e mascotes.</li></ul></div>
+  <div class="sub" style="width:min(430px,100%);text-align:center;font-size:14px"><a href="privacidade.html" style="color:var(--gold)">Política de Privacidade</a></div>
 </div>
 
 <!-- ============ JOGO ============ -->
