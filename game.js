@@ -646,7 +646,7 @@ class Arena {
   }
   groupHitsPoly(g) {
     for (const m of g.members) for (const p of partsOf(m)) {
-      for (const o of this.placed.concat([this.base])) {
+      for (const o of (g.ghost ? [this.base] : this.placed.concat([this.base]))) {
         if (g.set.has(o)) continue;
         const ob = o.bounds; if (p.bounds.max.x <= ob.min.x || p.bounds.min.x >= ob.max.x || p.bounds.max.y <= ob.min.y || p.bounds.min.y >= ob.max.y) continue;
         for (const q of partsOf(o)) {
@@ -666,10 +666,66 @@ class Arena {
   moveGroupBy(g, dx, dy) { for (const m of g.members) Body.translate(m, { x: dx, y: dy }); }
   /* o grupo parou: se está reto, vira peça normal (confere o apoio de novo); se está torto, vira entulho firme onde parou */
   stopGroup(g) {
-    if (Math.abs(g.th) < .03 && Math.abs(g.w) < .01) { this.settle(g); return; }
-    const i = this.slides.indexOf(g); if (i >= 0) this.slides.splice(i, 1);
-    for (const m of g.members) { m.torre.moving = false; m.torre.fixed = true; m.torre.sup = []; m.torre.hull = null; m.torre.tilted = true; }
-    sfx.land();
+    const frozen = () => {
+      const i = this.slides.indexOf(g); if (i >= 0) this.slides.splice(i, 1);
+      for (const m of g.members) { m.torre.moving = false; m.torre.fixed = true; m.torre.sup = []; m.torre.hull = null; m.torre.tilted = true; }
+      sfx.land();
+    };
+    // quanto o grupo está torto em relação a "deitado/de pé" (múltiplos de 90°)
+    const ang = g.members[0].angle || 0, Q = Math.PI / 2;
+    const r = ((ang + Q / 2) % Q + Q) % Q - Q / 2;
+    if (Math.abs(r) < .09) {
+      // quase reto: alinha de vez e confere o apoio como qualquer peça (se não tiver apoio, tomba de novo)
+      if (Math.abs(r) > .002) { const C = this.groupCenter(g); this.rotateGroup(g, -r, C); if (this.groupHitsPoly(g)) this.rotateGroup(g, r, C); }
+      g.th = 0; g.w = 0; this.settle(g); return;
+    }
+    // inclinado e encostado só numa quina: não pode ficar parado. Continua tombando em volta dessa quina
+    g.jam = (g.jam || 0) + 1;
+    if (g.jam <= 14) {
+      let P = this.contactPoint(g);
+      if (!P) { let low = -1e9, lx = 0; for (const m of g.members) for (const p of partsOf(m)) for (const v of p.vertices) if (v.y > low) { low = v.y; lx = v.x; } P = { x: lx, y: low }; }
+      const C = this.groupCenter(g), d = C.x - P.x;
+      // tentativas alternadas: ora tomba para o lado do peso, ora "assenta" deitando sobre o que está embaixo
+      const flatten = g.jam % 2 === 0 || Math.abs(d) <= 1.5;
+      g.P = P; g.mode = 'tip'; g.w = 0; g.th = 0; g.age = Math.min(g.age, 200);
+      if (flatten) { g.flat = true; g.dir = -Math.sign(r) || 1; } else { g.flat = false; g.dir = Math.sign(d); }
+      return;
+    }
+    // não consegue tombar (entalado): se está pousado em algo, fica; se está no ar, solta e cai (só a ilha o segura)
+    if (g.ghost || this.restsOnSomething(g)) { frozen(); return; }
+    g.jam = 0; g.ghost = true; g.mode = 'fly'; g.age = Math.min(g.age, 300);
+    g.v = { x: (g.dir || 1) * 1.2, y: 1 }; g.w = (g.dir || 1) * .02;
+  }
+  /* onde o grupo toca em outro bloco (ponto de contato mais próximo): é a quina em torno da qual ele tomba */
+  contactPoint(g) {
+    const dseg = (px, py, a, b) => {
+      const vx = b.x - a.x, vy = b.y - a.y, L = vx * vx + vy * vy || 1, t = clamp(((px - a.x) * vx + (py - a.y) * vy) / L, 0, 1);
+      return Math.hypot(px - (a.x + t * vx), py - (a.y + t * vy));
+    };
+    const dpoly = (px, py, V) => { let d = 1e9; for (let i = 0; i < V.length; i++) d = Math.min(d, dseg(px, py, V[i], V[(i + 1) % V.length])); return d; };
+    let best = 6, P = null;
+    for (const m of g.members) for (const p of partsOf(m)) {
+      for (const o of this.placed.concat([this.base])) {
+        if (g.set.has(o)) continue;
+        for (const q of partsOf(o)) {
+          if (p.bounds.max.x < q.bounds.min.x - 6 || p.bounds.min.x > q.bounds.max.x + 6 || p.bounds.max.y < q.bounds.min.y - 6 || p.bounds.min.y > q.bounds.max.y + 6) continue;
+          for (const v of p.vertices) { const d = dpoly(v.x, v.y, q.vertices); if (d < best) { best = d; P = { x: v.x, y: v.y }; } }
+          for (const v of q.vertices) { const d = dpoly(v.x, v.y, p.vertices); if (d < best) { best = d; P = { x: v.x, y: v.y }; } }
+        }
+      }
+    }
+    return P;
+  }
+  /* o ponto mais baixo do grupo está pousado em cima de alguma coisa (ilha ou topo de outro bloco)? */
+  restsOnSomething(g) {
+    let low = -1e9, lx = 0;
+    for (const m of g.members) for (const p of partsOf(m)) for (const v of p.vertices) if (v.y > low) { low = v.y; lx = v.x; }
+    if (low >= BASE_Y - 10) return true;
+    for (const o of this.placed) {
+      if (g.set.has(o)) continue;
+      for (const q of partsOf(o)) if (lx >= q.bounds.min.x - 4 && lx <= q.bounds.max.x + 4 && Math.abs(q.bounds.min.y - low) <= 6) return true;
+    }
+    return false;
   }
   settle(g) {
     const i = this.slides.indexOf(g); if (i >= 0) this.slides.splice(i, 1);
@@ -686,18 +742,21 @@ class Arena {
     for (const g of this.slides.slice()) {
       if (!this.slides.includes(g)) continue;
       g.members = g.members.filter(m => this.placed.includes(m)); if (!g.members.length) { this.slides.splice(this.slides.indexOf(g), 1); continue; }
-      if (++g.age > 900) { for (const m of g.members) { m.torre.moving = false; m.torre.fixed = true; m.torre.sup = []; } this.slides.splice(this.slides.indexOf(g), 1); continue; }
+      if (++g.age > 420) { if (!g.ghost) { g.ghost = true; g.mode = 'fly'; g.age = 300; g.v = { x: 0, y: 2 }; } else { for (const m of g.members) { m.torre.moving = false; m.torre.fixed = true; m.torre.sup = []; } this.slides.splice(this.slides.indexOf(g), 1); continue; } }
       if (g.mode === 'tip') {
         // física de um corpo rígido apoiado numa quina: o peso (centro de massa fora da borda) gera torque e o grupo gira
         let sx = 0, I = 0, n = 0;
         for (const m of g.members) for (const p of partsOf(m)) { const dx = p.position.x - g.P.x, dy = p.position.y - g.P.y; sx += dx; I += dx * dx + dy * dy + S * S / 6; n++; }
         let tau = G_FALL * sx; const minT = G_FALL * n * TIP_MIN_ARM;
         if (g.dir * tau < minT) tau = g.dir * minT;
-        g.w = clamp(g.w + tau / I, -OMEGA_MAX, OMEGA_MAX);
+        g.w = g.flat ? g.dir * .035 : clamp(g.w + tau / I, -OMEGA_MAX, OMEGA_MAX);
         this.rotateGroup(g, g.w, g.P);
         if (this.groupHitsPoly(g)) { this.rotateGroup(g, -g.w, g.P); this.stopGroup(g); continue; }
         g.th += g.w;
-        if (Math.abs(g.th) >= TIP_RELEASE) {
+        if (g.flat) {   // deitando: ao ficar reto, confere o apoio
+          const an = g.members[0].angle || 0, Q = Math.PI / 2, rr = ((an + Q / 2) % Q + Q) % Q - Q / 2;
+          if (Math.abs(rr) < .03) { this.stopGroup(g); continue; }
+        } else if (Math.abs(g.th) >= TIP_RELEASE) {
           const C = this.groupCenter(g), rx = C.x - g.P.x, ry = C.y - g.P.y;
           g.v = { x: -ry * g.w, y: rx * g.w }; g.mode = 'fly';
         }
@@ -713,9 +772,9 @@ class Arena {
           if (this.groupHitsPoly(g)) {
             // roçou na quina do apoio: empurra para o lado do excesso de peso (escorrega pela quina) e segue caindo
             let freed = false;
-            if (g.dir) for (let n = 1; n <= 6 && !freed; n++) { this.moveGroupBy(g, g.dir * 1.5, 0); if (!this.groupHitsPoly(g)) freed = true; }
+            if (g.dir) for (let n = 1; n <= 16 && !freed; n++) { this.moveGroupBy(g, g.dir * 2, 0); if (!this.groupHitsPoly(g)) freed = true; }
             if (!freed) {
-              if (g.dir) this.moveGroupBy(g, -g.dir * 9, 0);
+              if (g.dir) this.moveGroupBy(g, -g.dir * 32, 0);
               if (da) this.rotateGroup(g, -da, this.groupCenter(g));
               g.th -= da; this.moveGroupBy(g, -dx, -dy); stopped = true;
             }
@@ -814,7 +873,7 @@ class Arena {
     // peças caídas e altura da torre
     let top = BASE_Y, wob = 0;
     for (const b of this.placed.slice()) {
-      if (b.position.y > this.floorY()) {
+      if (b.position.y > (b.torre.moving ? this.floorY() : BASE_Y + 600)) {   // torre apoiada nunca "cai" só porque a câmera subiu
         Composite.remove(this.world, b); this.placed.splice(this.placed.indexOf(b), 1);
         this.lives--; this.setMood('sad', 1.2); sfx.lose(); this.pop('Caiu!', '#ff8fab'); continue;
       }
@@ -1401,6 +1460,7 @@ async function pushCloud() {
     setSyncMsg(error ? 'Não foi possível sincronizar agora.' : 'Progresso salvo na nuvem.');
   } catch (e) { setSyncMsg('Não foi possível sincronizar agora.'); }
 }
+function setAuthMsg(t) { const el = $('authMsg'); if (el) el.textContent = t; }
 function setSyncMsg(t) { const el = $('acctSync'); if (el) el.textContent = t; }
 // junta nuvem + aparelho sem perder nada: maiores números, todos os itens comprados
 function mergeSaves(a, b) {
@@ -1433,12 +1493,21 @@ function renderAcct() {
 }
 function initAuth() {
   const cfg = window.BBB_CONFIG;
-  if (cfg && cfg.SUPABASE_URL && cfg.SUPABASE_ANON_KEY && !/COLE_/.test(cfg.SUPABASE_URL) && window.supabase) {
+  if (cfg && cfg.SUPABASE_URL && cfg.SUPABASE_ANON_KEY && !/COLE_/.test(cfg.SUPABASE_URL + cfg.SUPABASE_ANON_KEY) && window.supabase) {
     try { sb = window.supabase.createClient(cfg.SUPABASE_URL, cfg.SUPABASE_ANON_KEY, { auth: { flowType: 'pkce', persistSession: true, detectSessionInUrl: true } }); } catch (e) { sb = null; }
   }
   renderAcct();
   if (!sb) return;
-  $('btnGoogle').onclick = () => sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.origin + location.pathname } });
+  $('btnGoogle').onclick = async () => {
+    setAuthMsg('Abrindo o Google…');
+    try {
+      // pegamos o endereço de login e levamos a chave junto (o Supabase novo exige a chave no pedido)
+      const r = await sb.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.origin + location.pathname, skipBrowserRedirect: true } });
+      if (r.error || !r.data || !r.data.url) throw r.error || new Error('endereço de login vazio');
+      const u = new URL(r.data.url); if (!u.searchParams.has('apikey')) u.searchParams.set('apikey', cfg.SUPABASE_ANON_KEY);
+      location.href = u.toString();
+    } catch (e) { setAuthMsg('Não foi possível abrir o login: ' + ((e && e.message) || e)); }
+  };
   $('btnLogout').onclick = async () => { await sb.auth.signOut(); authUser = null; playerOk = false; friends = []; duels = []; renderAcct(); };
   sb.auth.onAuthStateChange((ev, session) => {
     const u = session && session.user ? session.user : null;
@@ -1448,4 +1517,12 @@ function initAuth() {
   });
 }
 initAuth();
+// se o login voltou com erro (o Supabase manda o motivo no endereço), mostra na tela do Perfil
+(function authReturnError() {
+  const q = new URLSearchParams(location.search), h = new URLSearchParams(location.hash.replace(/^#/, ''));
+  const err = q.get('error_description') || h.get('error_description') || q.get('error') || h.get('error');
+  if (!err) return;
+  try { history.replaceState(null, '', location.pathname); } catch (e) {}
+  setTimeout(() => { openProfile(); setAuthMsg('O login voltou com erro: ' + err); }, 500);
+})();
 })();

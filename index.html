@@ -54,6 +54,7 @@
   .screen{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;padding:calc(14px + env(safe-area-inset-top)) 16px 16px;gap:12px;overflow:auto}
   .nav-screen{padding-bottom:calc(120px + env(safe-area-inset-bottom))}
   .screen>*{flex-shrink:0}
+  .nav-screen::after{content:"";flex:0 0 calc(96px + env(safe-area-inset-bottom))}
   .screen::after{content:"";flex:0 0 1px}
   .head{display:flex;align-items:center;justify-content:space-between;width:min(430px,100%)}
   .head h2{margin:0;font-size:40px;line-height:1;color:#f1fbf6}
@@ -246,6 +247,7 @@
     <div id="acctGuest" class="hidden">
       <div class="sub" style="margin-bottom:10px">Entre com o Google para guardar moedas, skins e recorde na nuvem e jogar em qualquer aparelho.</div>
       <button class="btn" id="btnGoogle" type="button">Entrar com Google</button>
+      <div class="sub" id="authMsg" style="margin-top:10px;color:var(--gold);overflow-wrap:anywhere"></div>
     </div>
     <div id="acctUser" class="hidden">
       <div class="who"><div class="av" id="acctAv"></div><div><b id="acctName"></b><div class="sub" id="acctMail"></div></div></div>
@@ -321,7 +323,9 @@
 <script src="https://cdn.jsdelivr.net/npm/matter-js@0.19.0/build/matter.min.js"></script>
 <script>window.Matter||document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"><\/script>')</script>
 <script src="config.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
-<script src="game.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.1/dist/umd/supabase.min.js"></script>
+<script>if(!window.supabase){document.write('<script src="https://unpkg.com/@supabase/supabase-js@2.110.1/dist/umd/supabase.js"><\/script>')}</script>
+<script>if(!window.supabase){document.write('<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"><\/script>')}</script>
+<script src="game.js?v=20261108"></script>
 </body>
 </html>

@@ -1,68 +1,444 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 626 354" role="img" aria-label="Brick by Brick">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 610" role="img" aria-label="Brick by Brick">
 <defs>
-<linearGradient id="fill" x1="0" y1="0" x2="0" y2="100" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#e3fff0"/><stop offset=".45" stop-color="#86f3b9"/><stop offset="1" stop-color="#2fb083"/></linearGradient>
-<linearGradient id="gold" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff0b8"/><stop offset=".55" stop-color="#f7c859"/><stop offset="1" stop-color="#e29a22"/></linearGradient>
+<path id="gB" d="M-0 100H50.41C73.61 100 87.32 88.05 87.32 71.68C87.32 57.58 76.84 47.92 63.05 47.45V47.32C75.47 45.1 83.73 36.58 83.73 24.97C83.73 10.4 70.81 0 46.39 0H-0ZM29.01 79.06V59.33H44.81C52.06 59.33 56.73 63.22 56.73 69.19C56.73 75.17 52.06 79.06 44.81 79.06ZM29.01 39.6V20.94H43.02C49.62 20.94 53.86 24.63 53.86 30.27C53.86 35.91 49.62 39.6 43.02 39.6Z"/>
+<clipPath id="cB"><use href="#gB"/></clipPath>
+<path id="gR" d="M-0 100H29.87V68.72H43.23L59.24 100H90.34L70.73 62.68C81.15 56.91 87.04 47.32 87.04 34.9C87.04 13.49 71.02 0 45.46 0H-0ZM29.87 47.11V22.68H43.23C52.21 22.68 57.88 27.58 57.88 34.9C57.88 42.21 52.21 47.11 43.23 47.11Z"/>
+<clipPath id="cR"><use href="#gR"/></clipPath>
+<path id="gI" d="M29.87 0H-0V100H29.87Z"/>
+<clipPath id="cI"><use href="#gI"/></clipPath>
+<path id="gC" d="M51.99 101.61C79.35 101.61 98.67 86.04 101.69 62.42H71.6C69.73 71.81 62.84 77.45 52.57 77.45C37.99 77.45 30.16 67.52 30.16 50.07C30.16 32.55 38.06 22.55 52.57 22.55C62.84 22.55 69.8 28.26 71.6 37.72H101.69C98.74 14.09 79.35 -1.61 51.99 -1.61C22.76 -1.61 -0 16.64 -0 50.07C-0 83.22 22.76 101.61 51.99 101.61Z"/>
+<clipPath id="cC"><use href="#gC"/></clipPath>
+<path id="gK" d="M-0 100H29.87V76.78L42.87 61.88L67.29 100H101.47L62.12 42.95L99.46 0H64.92L43.66 25.7C39.07 31.28 34.47 36.78 29.87 42.35V0H-0Z"/>
+<clipPath id="cK"><use href="#gK"/></clipPath>
+<path id="gY" d="M39.86 100H68.72V65.91L107.43 0H73.46L59.03 28.05C57.45 31.21 55.87 34.36 54.43 37.58C52.85 34.36 51.27 31.21 49.55 28.05L34.18 0H0L39.86 65.91Z"/>
+<clipPath id="cY"><use href="#gY"/></clipPath>
+<linearGradient id="face" gradientUnits="userSpaceOnUse" x1="0" y1="-4" x2="0" y2="106"><stop offset="0" stop-color="#eaffd9"/><stop offset=".38" stop-color="#a6f29a"/><stop offset="1" stop-color="#3fb27a"/></linearGradient>
+<linearGradient id="faceGold" gradientUnits="userSpaceOnUse" x1="0" y1="-4" x2="0" y2="106"><stop offset="0" stop-color="#fffadb"/><stop offset=".5" stop-color="#fde28d"/><stop offset="1" stop-color="#f2b94b"/></linearGradient>
+<linearGradient id="shine" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="80" y2="110"><stop offset="0" stop-color="#fff" stop-opacity=".85"/><stop offset=".45" stop-color="#fff" stop-opacity=".25"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
 <path id="spark" d="M0 -22 C2 -8 8 -2 22 0 C8 2 2 8 0 22 C-2 8 -8 2 -22 0 C-8 -2 -2 -8 0 -22Z"/>
 </defs>
-<g transform="translate(0 11)"><g transform="translate(28.0 19.9) rotate(-0.78 42 50)"><path d="M12 8 V92 M12 8 H44 C74 8 74 48 44 48 H12 M44 48 H52 C84 48 84 92 52 92 H12" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke="#072624" stroke-width="39"/></g>
-<g transform="translate(146.0 19.4) rotate(0.66 42 50)"><path d="M12 92 V8 H44 C76 8 76 50 44 50 H12 M42 50 L76 92" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke="#072624" stroke-width="39"/></g>
-<g transform="translate(264.0 21.2) rotate(0.16 42 50)"><path d="M26 8 V92" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke="#072624" stroke-width="39"/></g>
-<g transform="translate(328.0 22.0) rotate(-1.94 42 50)"><path d="M76 24 C66 6 12 6 12 50 C12 94 66 94 76 76" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke="#072624" stroke-width="39"/></g>
-<g transform="translate(440.0 21.6) rotate(-2.04 42 50)"><path d="M12 8 V92 M74 8 L14 56 M36 38 L76 92" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke="#072624" stroke-width="39"/></g>
-<g transform="translate(72.0 195.5) rotate(-1.89 42 50)"><path d="M12 8 V92 M12 8 H44 C74 8 74 48 44 48 H12 M44 48 H52 C84 48 84 92 52 92 H12" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke="#072624" stroke-width="39"/></g>
-<g transform="translate(190.0 200.0) rotate(-0.33 42 50)"><path d="M12 92 V8 H44 C76 8 76 50 44 50 H12 M42 50 L76 92" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke="#072624" stroke-width="39"/></g>
-<g transform="translate(308.0 196.3) rotate(-1.66 42 50)"><path d="M26 8 V92" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke="#072624" stroke-width="39"/></g>
-<g transform="translate(372.0 200.7) rotate(0.56 42 50)"><path d="M76 24 C66 6 12 6 12 50 C12 94 66 94 76 76" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke="#072624" stroke-width="39"/></g>
-<g transform="translate(484.0 197.4) rotate(0.34 42 50)"><path d="M12 8 V92 M74 8 L14 56 M36 38 L76 92" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke="#072624" stroke-width="39"/></g></g>
-<g transform="translate(28.0 19.9) rotate(-0.78 42 50)"><path d="M12 8 V92 M12 8 H44 C74 8 74 48 44 48 H12 M44 48 H52 C84 48 84 92 52 92 H12" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke="#0f4a43" stroke-width="39"/></g>
-<g transform="translate(146.0 19.4) rotate(0.66 42 50)"><path d="M12 92 V8 H44 C76 8 76 50 44 50 H12 M42 50 L76 92" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke="#0f4a43" stroke-width="39"/></g>
-<g transform="translate(264.0 21.2) rotate(0.16 42 50)"><path d="M26 8 V92" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke="#0f4a43" stroke-width="39"/></g>
-<g transform="translate(328.0 22.0) rotate(-1.94 42 50)"><path d="M76 24 C66 6 12 6 12 50 C12 94 66 94 76 76" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke="#0f4a43" stroke-width="39"/></g>
-<g transform="translate(440.0 21.6) rotate(-2.04 42 50)"><path d="M12 8 V92 M74 8 L14 56 M36 38 L76 92" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke="#0f4a43" stroke-width="39"/></g>
-<g transform="translate(72.0 195.5) rotate(-1.89 42 50)"><path d="M12 8 V92 M12 8 H44 C74 8 74 48 44 48 H12 M44 48 H52 C84 48 84 92 52 92 H12" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke="#0f4a43" stroke-width="39"/></g>
-<g transform="translate(190.0 200.0) rotate(-0.33 42 50)"><path d="M12 92 V8 H44 C76 8 76 50 44 50 H12 M42 50 L76 92" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke="#0f4a43" stroke-width="39"/></g>
-<g transform="translate(308.0 196.3) rotate(-1.66 42 50)"><path d="M26 8 V92" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke="#0f4a43" stroke-width="39"/></g>
-<g transform="translate(372.0 200.7) rotate(0.56 42 50)"><path d="M76 24 C66 6 12 6 12 50 C12 94 66 94 76 76" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke="#0f4a43" stroke-width="39"/></g>
-<g transform="translate(484.0 197.4) rotate(0.34 42 50)"><path d="M12 8 V92 M74 8 L14 56 M36 38 L76 92" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke="#0f4a43" stroke-width="39"/></g>
-<g transform="translate(28.0 19.9) rotate(-0.78 42 50)"><path d="M12 8 V92 M12 8 H44 C74 8 74 48 44 48 H12 M44 48 H52 C84 48 84 92 52 92 H12" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke="#1c7a66" stroke-width="26"/></g>
-<g transform="translate(146.0 19.4) rotate(0.66 42 50)"><path d="M12 92 V8 H44 C76 8 76 50 44 50 H12 M42 50 L76 92" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke="#1c7a66" stroke-width="26"/></g>
-<g transform="translate(264.0 21.2) rotate(0.16 42 50)"><path d="M26 8 V92" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke="#1c7a66" stroke-width="26"/></g>
-<g transform="translate(328.0 22.0) rotate(-1.94 42 50)"><path d="M76 24 C66 6 12 6 12 50 C12 94 66 94 76 76" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke="#1c7a66" stroke-width="26"/></g>
-<g transform="translate(440.0 21.6) rotate(-2.04 42 50)"><path d="M12 8 V92 M74 8 L14 56 M36 38 L76 92" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke="#1c7a66" stroke-width="26"/></g>
-<g transform="translate(72.0 195.5) rotate(-1.89 42 50)"><path d="M12 8 V92 M12 8 H44 C74 8 74 48 44 48 H12 M44 48 H52 C84 48 84 92 52 92 H12" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke="#1c7a66" stroke-width="26"/></g>
-<g transform="translate(190.0 200.0) rotate(-0.33 42 50)"><path d="M12 92 V8 H44 C76 8 76 50 44 50 H12 M42 50 L76 92" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke="#1c7a66" stroke-width="26"/></g>
-<g transform="translate(308.0 196.3) rotate(-1.66 42 50)"><path d="M26 8 V92" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke="#1c7a66" stroke-width="26"/></g>
-<g transform="translate(372.0 200.7) rotate(0.56 42 50)"><path d="M76 24 C66 6 12 6 12 50 C12 94 66 94 76 76" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke="#1c7a66" stroke-width="26"/></g>
-<g transform="translate(484.0 197.4) rotate(0.34 42 50)"><path d="M12 8 V92 M74 8 L14 56 M36 38 L76 92" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke="#1c7a66" stroke-width="26"/></g>
-<g transform="translate(28.0 19.9) rotate(-0.78 42 50)"><path d="M12 8 V92 M12 8 H44 C74 8 74 48 44 48 H12 M44 48 H52 C84 48 84 92 52 92 H12" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke="url(#fill)" stroke-width="21"/></g>
-<g transform="translate(146.0 19.4) rotate(0.66 42 50)"><path d="M12 92 V8 H44 C76 8 76 50 44 50 H12 M42 50 L76 92" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke="url(#fill)" stroke-width="21"/></g>
-<g transform="translate(264.0 21.2) rotate(0.16 42 50)"><path d="M26 8 V92" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke="url(#fill)" stroke-width="21"/></g>
-<g transform="translate(328.0 22.0) rotate(-1.94 42 50)"><path d="M76 24 C66 6 12 6 12 50 C12 94 66 94 76 76" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke="url(#fill)" stroke-width="21"/></g>
-<g transform="translate(440.0 21.6) rotate(-2.04 42 50)"><path d="M12 8 V92 M74 8 L14 56 M36 38 L76 92" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke="url(#fill)" stroke-width="21"/></g>
-<g transform="translate(72.0 195.5) rotate(-1.89 42 50)"><path d="M12 8 V92 M12 8 H44 C74 8 74 48 44 48 H12 M44 48 H52 C84 48 84 92 52 92 H12" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke="url(#fill)" stroke-width="21"/></g>
-<g transform="translate(190.0 200.0) rotate(-0.33 42 50)"><path d="M12 92 V8 H44 C76 8 76 50 44 50 H12 M42 50 L76 92" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke="url(#fill)" stroke-width="21"/></g>
-<g transform="translate(308.0 196.3) rotate(-1.66 42 50)"><path d="M26 8 V92" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke="url(#fill)" stroke-width="21"/></g>
-<g transform="translate(372.0 200.7) rotate(0.56 42 50)"><path d="M76 24 C66 6 12 6 12 50 C12 94 66 94 76 76" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke="url(#fill)" stroke-width="21"/></g>
-<g transform="translate(484.0 197.4) rotate(0.34 42 50)"><path d="M12 8 V92 M74 8 L14 56 M36 38 L76 92" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke="url(#fill)" stroke-width="21"/></g>
-<g opacity=".8"><g transform="translate(24.5 16.4) rotate(-0.78 42 50)"><path d="M12 8 V92 M12 8 H44 C74 8 74 48 44 48 H12 M44 48 H52 C84 48 84 92 52 92 H12" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke="#ffffff" stroke-opacity=".75" stroke-width="4"/></g>
-<g transform="translate(142.5 15.9) rotate(0.66 42 50)"><path d="M12 92 V8 H44 C76 8 76 50 44 50 H12 M42 50 L76 92" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke="#ffffff" stroke-opacity=".75" stroke-width="4"/></g>
-<g transform="translate(260.5 17.7) rotate(0.16 42 50)"><path d="M26 8 V92" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke="#ffffff" stroke-opacity=".75" stroke-width="4"/></g>
-<g transform="translate(324.5 18.5) rotate(-1.94 42 50)"><path d="M76 24 C66 6 12 6 12 50 C12 94 66 94 76 76" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke="#ffffff" stroke-opacity=".75" stroke-width="4"/></g>
-<g transform="translate(436.5 18.1) rotate(-2.04 42 50)"><path d="M12 8 V92 M74 8 L14 56 M36 38 L76 92" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke="#ffffff" stroke-opacity=".75" stroke-width="4"/></g>
-<g transform="translate(68.5 192.0) rotate(-1.89 42 50)"><path d="M12 8 V92 M12 8 H44 C74 8 74 48 44 48 H12 M44 48 H52 C84 48 84 92 52 92 H12" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke="#ffffff" stroke-opacity=".75" stroke-width="4"/></g>
-<g transform="translate(186.5 196.5) rotate(-0.33 42 50)"><path d="M12 92 V8 H44 C76 8 76 50 44 50 H12 M42 50 L76 92" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke="#ffffff" stroke-opacity=".75" stroke-width="4"/></g>
-<g transform="translate(304.5 192.8) rotate(-1.66 42 50)"><path d="M26 8 V92" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke="#ffffff" stroke-opacity=".75" stroke-width="4"/></g>
-<g transform="translate(368.5 197.2) rotate(0.56 42 50)"><path d="M76 24 C66 6 12 6 12 50 C12 94 66 94 76 76" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke="#ffffff" stroke-opacity=".75" stroke-width="4"/></g>
-<g transform="translate(480.5 193.9) rotate(0.34 42 50)"><path d="M12 8 V92 M74 8 L14 56 M36 38 L76 92" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke="#ffffff" stroke-opacity=".75" stroke-width="4"/></g></g>
-<g transform="translate(313 156) rotate(-3)">
-<rect x="-66" y="-19" width="132" height="60" rx="28" fill="#072624"/>
-<rect x="-66" y="-30" width="132" height="60" rx="28" fill="#0f4a43"/>
-<rect x="-59" y="-23" width="118" height="46" rx="22" fill="url(#gold)"/>
-<rect x="-48" y="-19" width="96" height="6" rx="3" fill="#fff" opacity=".55"/>
-<g transform="translate(-33 -19) scale(.40)"><path d="M12 8 V92 M12 8 H44 C74 8 74 48 44 48 H12 M44 48 H52 C84 48 84 92 52 92 H12" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke="#6a4300" stroke-width="19"/></g>
-<g transform="translate(3 -19) scale(.40)"><path d="M10 8 L42 50 L74 8 M42 50 V92" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke="#6a4300" stroke-width="19"/></g>
+<g transform="translate(54.0 46.0) scale(1.307384764706501) rotate(-1.6 43.7 50.0)">
+<use href="#gB" x="0.00" y="0.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gB" x="1.10" y="2.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gB" x="2.20" y="4.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gB" x="3.30" y="6.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gB" x="4.40" y="8.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gB" x="5.50" y="10.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gB" x="6.60" y="12.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gB" x="7.70" y="14.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gB" x="8.80" y="16.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
 </g>
-<g transform="translate(596 34)"><g><use href="#spark" transform="scale(1.0)" fill="#ffe08a" stroke="#0f4a43" stroke-width="5" stroke-linejoin="round" paint-order="stroke"/><animateTransform attributeName="transform" type="scale" values="1;.7;1" dur="2.4s" begin="0s" repeatCount="indefinite"/></g></g>
-<g transform="translate(24 318)"><g><use href="#spark" transform="scale(0.7)" fill="#ffe08a" stroke="#0f4a43" stroke-width="5" stroke-linejoin="round" paint-order="stroke"/><animateTransform attributeName="transform" type="scale" values="1;.7;1" dur="2.4s" begin="0.8s" repeatCount="indefinite"/></g></g>
-<g transform="translate(556 334)"><g><use href="#spark" transform="scale(0.45)" fill="#ffe08a" stroke="#0f4a43" stroke-width="5" stroke-linejoin="round" paint-order="stroke"/><animateTransform attributeName="transform" type="scale" values="1;.7;1" dur="2.4s" begin="1.4s" repeatCount="indefinite"/></g></g>
+<g transform="translate(179.9 43.0) scale(1.307384764706501) rotate(1.1 45.2 50.0)">
+<use href="#gR" x="0.00" y="0.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gR" x="1.10" y="2.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gR" x="2.20" y="4.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gR" x="3.30" y="6.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gR" x="4.40" y="8.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gR" x="5.50" y="10.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gR" x="6.60" y="12.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gR" x="7.70" y="14.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gR" x="8.80" y="16.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+</g>
+<g transform="translate(309.8 48.0) scale(1.307384764706501) rotate(0.4 14.9 50.0)">
+<use href="#gI" x="0.00" y="0.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gI" x="1.10" y="2.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gI" x="2.20" y="4.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gI" x="3.30" y="6.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gI" x="4.40" y="8.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gI" x="5.50" y="10.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gI" x="6.60" y="12.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gI" x="7.70" y="14.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gI" x="8.80" y="16.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+</g>
+<g transform="translate(360.6 44.0) scale(1.307384764706501) rotate(-1.2 50.8 50.0)">
+<use href="#gC" x="0.00" y="0.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gC" x="1.10" y="2.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gC" x="2.20" y="4.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gC" x="3.30" y="6.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gC" x="4.40" y="8.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gC" x="5.50" y="10.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gC" x="6.60" y="12.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gC" x="7.70" y="14.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gC" x="8.80" y="16.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+</g>
+<g transform="translate(505.3 47.0) scale(1.307384764706501) rotate(1.5 50.7 50.0)">
+<use href="#gK" x="0.00" y="0.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gK" x="1.10" y="2.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gK" x="2.20" y="4.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gK" x="3.30" y="6.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gK" x="4.40" y="8.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gK" x="5.50" y="10.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gK" x="6.60" y="12.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gK" x="7.70" y="14.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gK" x="8.80" y="16.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+</g>
+<g transform="translate(54.0 374.0) scale(1.307384764706501) rotate(1.4 43.7 50.0)">
+<use href="#gB" x="0.00" y="0.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gB" x="1.10" y="2.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gB" x="2.20" y="4.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gB" x="3.30" y="6.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gB" x="4.40" y="8.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gB" x="5.50" y="10.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gB" x="6.60" y="12.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gB" x="7.70" y="14.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gB" x="8.80" y="16.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+</g>
+<g transform="translate(179.9 372.0) scale(1.307384764706501) rotate(-1.0 45.2 50.0)">
+<use href="#gR" x="0.00" y="0.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gR" x="1.10" y="2.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gR" x="2.20" y="4.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gR" x="3.30" y="6.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gR" x="4.40" y="8.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gR" x="5.50" y="10.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gR" x="6.60" y="12.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gR" x="7.70" y="14.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gR" x="8.80" y="16.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+</g>
+<g transform="translate(309.8 369.0) scale(1.307384764706501) rotate(0.5 14.9 50.0)">
+<use href="#gI" x="0.00" y="0.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gI" x="1.10" y="2.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gI" x="2.20" y="4.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gI" x="3.30" y="6.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gI" x="4.40" y="8.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gI" x="5.50" y="10.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gI" x="6.60" y="12.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gI" x="7.70" y="14.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gI" x="8.80" y="16.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+</g>
+<g transform="translate(360.6 373.0) scale(1.307384764706501) rotate(1.5 50.8 50.0)">
+<use href="#gC" x="0.00" y="0.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gC" x="1.10" y="2.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gC" x="2.20" y="4.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gC" x="3.30" y="6.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gC" x="4.40" y="8.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gC" x="5.50" y="10.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gC" x="6.60" y="12.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gC" x="7.70" y="14.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gC" x="8.80" y="16.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+</g>
+<g transform="translate(505.3 370.0) scale(1.307384764706501) rotate(-1.4 50.7 50.0)">
+<use href="#gK" x="0.00" y="0.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gK" x="1.10" y="2.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gK" x="2.20" y="4.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gK" x="3.30" y="6.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gK" x="4.40" y="8.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gK" x="5.50" y="10.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gK" x="6.60" y="12.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gK" x="7.70" y="14.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+<use href="#gK" x="8.80" y="16.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="20.17" stroke-linejoin="round"/>
+</g>
+<g transform="translate(228.6 222.0) scale(1.1243508976475907) rotate(-3.5 43.7 50.0)">
+<use href="#gB" x="0.00" y="0.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="22.41" stroke-linejoin="round"/>
+<use href="#gB" x="1.10" y="2.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="22.41" stroke-linejoin="round"/>
+<use href="#gB" x="2.20" y="4.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="22.41" stroke-linejoin="round"/>
+<use href="#gB" x="3.30" y="6.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="22.41" stroke-linejoin="round"/>
+<use href="#gB" x="4.40" y="8.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="22.41" stroke-linejoin="round"/>
+<use href="#gB" x="5.50" y="10.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="22.41" stroke-linejoin="round"/>
+<use href="#gB" x="6.60" y="12.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="22.41" stroke-linejoin="round"/>
+<use href="#gB" x="7.70" y="14.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="22.41" stroke-linejoin="round"/>
+<use href="#gB" x="8.80" y="16.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="22.41" stroke-linejoin="round"/>
+</g>
+<g transform="translate(342.6 218.0) scale(1.1243508976475907) rotate(3 53.7 50.0)">
+<use href="#gY" x="0.00" y="0.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="22.41" stroke-linejoin="round"/>
+<use href="#gY" x="1.10" y="2.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="22.41" stroke-linejoin="round"/>
+<use href="#gY" x="2.20" y="4.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="22.41" stroke-linejoin="round"/>
+<use href="#gY" x="3.30" y="6.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="22.41" stroke-linejoin="round"/>
+<use href="#gY" x="4.40" y="8.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="22.41" stroke-linejoin="round"/>
+<use href="#gY" x="5.50" y="10.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="22.41" stroke-linejoin="round"/>
+<use href="#gY" x="6.60" y="12.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="22.41" stroke-linejoin="round"/>
+<use href="#gY" x="7.70" y="14.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="22.41" stroke-linejoin="round"/>
+<use href="#gY" x="8.80" y="16.00" fill="#0a2a2c" stroke="#0a2a2c" stroke-width="22.41" stroke-linejoin="round"/>
+</g>
+<g transform="translate(54.0 374.0) scale(1.307384764706501) rotate(1.4 43.7 50.0)">
+<use href="#gB" x="9.35" y="17.00" fill="#0f4d44" stroke="#0f4d44" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gB" x="8.80" y="16.00" fill="#115247" stroke="#115247" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gB" x="8.25" y="15.00" fill="#135749" stroke="#135749" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gB" x="7.70" y="14.00" fill="#165d4c" stroke="#165d4c" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gB" x="7.15" y="13.00" fill="#18624e" stroke="#18624e" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gB" x="6.60" y="12.00" fill="#1a6751" stroke="#1a6751" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gB" x="6.05" y="11.00" fill="#1c6c53" stroke="#1c6c53" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gB" x="5.50" y="10.00" fill="#1e7156" stroke="#1e7156" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gB" x="4.95" y="9.00" fill="#207658" stroke="#207658" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gB" x="4.40" y="8.00" fill="#237c5b" stroke="#237c5b" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gB" x="3.85" y="7.00" fill="#25815d" stroke="#25815d" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gB" x="3.30" y="6.00" fill="#278660" stroke="#278660" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gB" x="2.75" y="5.00" fill="#298b62" stroke="#298b62" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gB" x="2.20" y="4.00" fill="#2b9065" stroke="#2b9065" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gB" x="1.65" y="3.00" fill="#2d9567" stroke="#2d9567" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gB" x="1.10" y="2.00" fill="#309b6a" stroke="#309b6a" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gB" x="0.55" y="1.00" fill="#32a06c" stroke="#32a06c" stroke-width="6.40" stroke-linejoin="round"/>
+</g>
+<g transform="translate(179.9 372.0) scale(1.307384764706501) rotate(-1.0 45.2 50.0)">
+<use href="#gR" x="9.35" y="17.00" fill="#0f4d44" stroke="#0f4d44" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gR" x="8.80" y="16.00" fill="#115247" stroke="#115247" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gR" x="8.25" y="15.00" fill="#135749" stroke="#135749" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gR" x="7.70" y="14.00" fill="#165d4c" stroke="#165d4c" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gR" x="7.15" y="13.00" fill="#18624e" stroke="#18624e" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gR" x="6.60" y="12.00" fill="#1a6751" stroke="#1a6751" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gR" x="6.05" y="11.00" fill="#1c6c53" stroke="#1c6c53" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gR" x="5.50" y="10.00" fill="#1e7156" stroke="#1e7156" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gR" x="4.95" y="9.00" fill="#207658" stroke="#207658" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gR" x="4.40" y="8.00" fill="#237c5b" stroke="#237c5b" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gR" x="3.85" y="7.00" fill="#25815d" stroke="#25815d" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gR" x="3.30" y="6.00" fill="#278660" stroke="#278660" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gR" x="2.75" y="5.00" fill="#298b62" stroke="#298b62" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gR" x="2.20" y="4.00" fill="#2b9065" stroke="#2b9065" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gR" x="1.65" y="3.00" fill="#2d9567" stroke="#2d9567" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gR" x="1.10" y="2.00" fill="#309b6a" stroke="#309b6a" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gR" x="0.55" y="1.00" fill="#32a06c" stroke="#32a06c" stroke-width="6.40" stroke-linejoin="round"/>
+</g>
+<g transform="translate(309.8 369.0) scale(1.307384764706501) rotate(0.5 14.9 50.0)">
+<use href="#gI" x="9.35" y="17.00" fill="#0f4d44" stroke="#0f4d44" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gI" x="8.80" y="16.00" fill="#115247" stroke="#115247" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gI" x="8.25" y="15.00" fill="#135749" stroke="#135749" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gI" x="7.70" y="14.00" fill="#165d4c" stroke="#165d4c" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gI" x="7.15" y="13.00" fill="#18624e" stroke="#18624e" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gI" x="6.60" y="12.00" fill="#1a6751" stroke="#1a6751" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gI" x="6.05" y="11.00" fill="#1c6c53" stroke="#1c6c53" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gI" x="5.50" y="10.00" fill="#1e7156" stroke="#1e7156" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gI" x="4.95" y="9.00" fill="#207658" stroke="#207658" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gI" x="4.40" y="8.00" fill="#237c5b" stroke="#237c5b" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gI" x="3.85" y="7.00" fill="#25815d" stroke="#25815d" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gI" x="3.30" y="6.00" fill="#278660" stroke="#278660" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gI" x="2.75" y="5.00" fill="#298b62" stroke="#298b62" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gI" x="2.20" y="4.00" fill="#2b9065" stroke="#2b9065" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gI" x="1.65" y="3.00" fill="#2d9567" stroke="#2d9567" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gI" x="1.10" y="2.00" fill="#309b6a" stroke="#309b6a" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gI" x="0.55" y="1.00" fill="#32a06c" stroke="#32a06c" stroke-width="6.40" stroke-linejoin="round"/>
+</g>
+<g transform="translate(360.6 373.0) scale(1.307384764706501) rotate(1.5 50.8 50.0)">
+<use href="#gC" x="9.35" y="17.00" fill="#0f4d44" stroke="#0f4d44" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gC" x="8.80" y="16.00" fill="#115247" stroke="#115247" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gC" x="8.25" y="15.00" fill="#135749" stroke="#135749" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gC" x="7.70" y="14.00" fill="#165d4c" stroke="#165d4c" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gC" x="7.15" y="13.00" fill="#18624e" stroke="#18624e" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gC" x="6.60" y="12.00" fill="#1a6751" stroke="#1a6751" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gC" x="6.05" y="11.00" fill="#1c6c53" stroke="#1c6c53" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gC" x="5.50" y="10.00" fill="#1e7156" stroke="#1e7156" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gC" x="4.95" y="9.00" fill="#207658" stroke="#207658" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gC" x="4.40" y="8.00" fill="#237c5b" stroke="#237c5b" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gC" x="3.85" y="7.00" fill="#25815d" stroke="#25815d" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gC" x="3.30" y="6.00" fill="#278660" stroke="#278660" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gC" x="2.75" y="5.00" fill="#298b62" stroke="#298b62" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gC" x="2.20" y="4.00" fill="#2b9065" stroke="#2b9065" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gC" x="1.65" y="3.00" fill="#2d9567" stroke="#2d9567" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gC" x="1.10" y="2.00" fill="#309b6a" stroke="#309b6a" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gC" x="0.55" y="1.00" fill="#32a06c" stroke="#32a06c" stroke-width="6.40" stroke-linejoin="round"/>
+</g>
+<g transform="translate(505.3 370.0) scale(1.307384764706501) rotate(-1.4 50.7 50.0)">
+<use href="#gK" x="9.35" y="17.00" fill="#0f4d44" stroke="#0f4d44" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gK" x="8.80" y="16.00" fill="#115247" stroke="#115247" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gK" x="8.25" y="15.00" fill="#135749" stroke="#135749" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gK" x="7.70" y="14.00" fill="#165d4c" stroke="#165d4c" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gK" x="7.15" y="13.00" fill="#18624e" stroke="#18624e" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gK" x="6.60" y="12.00" fill="#1a6751" stroke="#1a6751" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gK" x="6.05" y="11.00" fill="#1c6c53" stroke="#1c6c53" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gK" x="5.50" y="10.00" fill="#1e7156" stroke="#1e7156" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gK" x="4.95" y="9.00" fill="#207658" stroke="#207658" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gK" x="4.40" y="8.00" fill="#237c5b" stroke="#237c5b" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gK" x="3.85" y="7.00" fill="#25815d" stroke="#25815d" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gK" x="3.30" y="6.00" fill="#278660" stroke="#278660" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gK" x="2.75" y="5.00" fill="#298b62" stroke="#298b62" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gK" x="2.20" y="4.00" fill="#2b9065" stroke="#2b9065" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gK" x="1.65" y="3.00" fill="#2d9567" stroke="#2d9567" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gK" x="1.10" y="2.00" fill="#309b6a" stroke="#309b6a" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gK" x="0.55" y="1.00" fill="#32a06c" stroke="#32a06c" stroke-width="6.40" stroke-linejoin="round"/>
+</g>
+<g transform="translate(54.0 374.0) scale(1.307384764706501) rotate(1.4 43.7 50.0)">
+<use href="#gB" fill="#1a6e55" stroke="#1a6e55" stroke-width="9.80" stroke-linejoin="round"/>
+<use href="#gB" fill="url(#face)" stroke="url(#face)" stroke-width="6.40" stroke-linejoin="round"/>
+<g clip-path="url(#cB)"><use href="#gB" fill="none" stroke="url(#shine)" stroke-width="8" stroke-linejoin="round"/></g>
+</g>
+<g transform="translate(179.9 372.0) scale(1.307384764706501) rotate(-1.0 45.2 50.0)">
+<use href="#gR" fill="#1a6e55" stroke="#1a6e55" stroke-width="9.80" stroke-linejoin="round"/>
+<use href="#gR" fill="url(#face)" stroke="url(#face)" stroke-width="6.40" stroke-linejoin="round"/>
+<g clip-path="url(#cR)"><use href="#gR" fill="none" stroke="url(#shine)" stroke-width="8" stroke-linejoin="round"/></g>
+</g>
+<g transform="translate(309.8 369.0) scale(1.307384764706501) rotate(0.5 14.9 50.0)">
+<use href="#gI" fill="#1a6e55" stroke="#1a6e55" stroke-width="9.80" stroke-linejoin="round"/>
+<use href="#gI" fill="url(#face)" stroke="url(#face)" stroke-width="6.40" stroke-linejoin="round"/>
+<g clip-path="url(#cI)"><use href="#gI" fill="none" stroke="url(#shine)" stroke-width="8" stroke-linejoin="round"/></g>
+</g>
+<g transform="translate(360.6 373.0) scale(1.307384764706501) rotate(1.5 50.8 50.0)">
+<use href="#gC" fill="#1a6e55" stroke="#1a6e55" stroke-width="9.80" stroke-linejoin="round"/>
+<use href="#gC" fill="url(#face)" stroke="url(#face)" stroke-width="6.40" stroke-linejoin="round"/>
+<g clip-path="url(#cC)"><use href="#gC" fill="none" stroke="url(#shine)" stroke-width="8" stroke-linejoin="round"/></g>
+</g>
+<g transform="translate(505.3 370.0) scale(1.307384764706501) rotate(-1.4 50.7 50.0)">
+<use href="#gK" fill="#1a6e55" stroke="#1a6e55" stroke-width="9.80" stroke-linejoin="round"/>
+<use href="#gK" fill="url(#face)" stroke="url(#face)" stroke-width="6.40" stroke-linejoin="round"/>
+<g clip-path="url(#cK)"><use href="#gK" fill="none" stroke="url(#shine)" stroke-width="8" stroke-linejoin="round"/></g>
+</g>
+<g transform="translate(54.0 46.0) scale(1.307384764706501) rotate(-1.6 43.7 50.0)">
+<use href="#gB" x="9.35" y="17.00" fill="#0f4d44" stroke="#0f4d44" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gB" x="8.80" y="16.00" fill="#115247" stroke="#115247" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gB" x="8.25" y="15.00" fill="#135749" stroke="#135749" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gB" x="7.70" y="14.00" fill="#165d4c" stroke="#165d4c" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gB" x="7.15" y="13.00" fill="#18624e" stroke="#18624e" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gB" x="6.60" y="12.00" fill="#1a6751" stroke="#1a6751" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gB" x="6.05" y="11.00" fill="#1c6c53" stroke="#1c6c53" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gB" x="5.50" y="10.00" fill="#1e7156" stroke="#1e7156" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gB" x="4.95" y="9.00" fill="#207658" stroke="#207658" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gB" x="4.40" y="8.00" fill="#237c5b" stroke="#237c5b" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gB" x="3.85" y="7.00" fill="#25815d" stroke="#25815d" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gB" x="3.30" y="6.00" fill="#278660" stroke="#278660" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gB" x="2.75" y="5.00" fill="#298b62" stroke="#298b62" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gB" x="2.20" y="4.00" fill="#2b9065" stroke="#2b9065" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gB" x="1.65" y="3.00" fill="#2d9567" stroke="#2d9567" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gB" x="1.10" y="2.00" fill="#309b6a" stroke="#309b6a" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gB" x="0.55" y="1.00" fill="#32a06c" stroke="#32a06c" stroke-width="6.40" stroke-linejoin="round"/>
+</g>
+<g transform="translate(179.9 43.0) scale(1.307384764706501) rotate(1.1 45.2 50.0)">
+<use href="#gR" x="9.35" y="17.00" fill="#0f4d44" stroke="#0f4d44" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gR" x="8.80" y="16.00" fill="#115247" stroke="#115247" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gR" x="8.25" y="15.00" fill="#135749" stroke="#135749" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gR" x="7.70" y="14.00" fill="#165d4c" stroke="#165d4c" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gR" x="7.15" y="13.00" fill="#18624e" stroke="#18624e" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gR" x="6.60" y="12.00" fill="#1a6751" stroke="#1a6751" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gR" x="6.05" y="11.00" fill="#1c6c53" stroke="#1c6c53" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gR" x="5.50" y="10.00" fill="#1e7156" stroke="#1e7156" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gR" x="4.95" y="9.00" fill="#207658" stroke="#207658" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gR" x="4.40" y="8.00" fill="#237c5b" stroke="#237c5b" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gR" x="3.85" y="7.00" fill="#25815d" stroke="#25815d" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gR" x="3.30" y="6.00" fill="#278660" stroke="#278660" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gR" x="2.75" y="5.00" fill="#298b62" stroke="#298b62" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gR" x="2.20" y="4.00" fill="#2b9065" stroke="#2b9065" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gR" x="1.65" y="3.00" fill="#2d9567" stroke="#2d9567" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gR" x="1.10" y="2.00" fill="#309b6a" stroke="#309b6a" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gR" x="0.55" y="1.00" fill="#32a06c" stroke="#32a06c" stroke-width="6.40" stroke-linejoin="round"/>
+</g>
+<g transform="translate(309.8 48.0) scale(1.307384764706501) rotate(0.4 14.9 50.0)">
+<use href="#gI" x="9.35" y="17.00" fill="#0f4d44" stroke="#0f4d44" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gI" x="8.80" y="16.00" fill="#115247" stroke="#115247" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gI" x="8.25" y="15.00" fill="#135749" stroke="#135749" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gI" x="7.70" y="14.00" fill="#165d4c" stroke="#165d4c" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gI" x="7.15" y="13.00" fill="#18624e" stroke="#18624e" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gI" x="6.60" y="12.00" fill="#1a6751" stroke="#1a6751" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gI" x="6.05" y="11.00" fill="#1c6c53" stroke="#1c6c53" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gI" x="5.50" y="10.00" fill="#1e7156" stroke="#1e7156" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gI" x="4.95" y="9.00" fill="#207658" stroke="#207658" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gI" x="4.40" y="8.00" fill="#237c5b" stroke="#237c5b" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gI" x="3.85" y="7.00" fill="#25815d" stroke="#25815d" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gI" x="3.30" y="6.00" fill="#278660" stroke="#278660" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gI" x="2.75" y="5.00" fill="#298b62" stroke="#298b62" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gI" x="2.20" y="4.00" fill="#2b9065" stroke="#2b9065" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gI" x="1.65" y="3.00" fill="#2d9567" stroke="#2d9567" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gI" x="1.10" y="2.00" fill="#309b6a" stroke="#309b6a" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gI" x="0.55" y="1.00" fill="#32a06c" stroke="#32a06c" stroke-width="6.40" stroke-linejoin="round"/>
+</g>
+<g transform="translate(360.6 44.0) scale(1.307384764706501) rotate(-1.2 50.8 50.0)">
+<use href="#gC" x="9.35" y="17.00" fill="#0f4d44" stroke="#0f4d44" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gC" x="8.80" y="16.00" fill="#115247" stroke="#115247" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gC" x="8.25" y="15.00" fill="#135749" stroke="#135749" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gC" x="7.70" y="14.00" fill="#165d4c" stroke="#165d4c" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gC" x="7.15" y="13.00" fill="#18624e" stroke="#18624e" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gC" x="6.60" y="12.00" fill="#1a6751" stroke="#1a6751" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gC" x="6.05" y="11.00" fill="#1c6c53" stroke="#1c6c53" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gC" x="5.50" y="10.00" fill="#1e7156" stroke="#1e7156" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gC" x="4.95" y="9.00" fill="#207658" stroke="#207658" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gC" x="4.40" y="8.00" fill="#237c5b" stroke="#237c5b" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gC" x="3.85" y="7.00" fill="#25815d" stroke="#25815d" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gC" x="3.30" y="6.00" fill="#278660" stroke="#278660" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gC" x="2.75" y="5.00" fill="#298b62" stroke="#298b62" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gC" x="2.20" y="4.00" fill="#2b9065" stroke="#2b9065" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gC" x="1.65" y="3.00" fill="#2d9567" stroke="#2d9567" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gC" x="1.10" y="2.00" fill="#309b6a" stroke="#309b6a" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gC" x="0.55" y="1.00" fill="#32a06c" stroke="#32a06c" stroke-width="6.40" stroke-linejoin="round"/>
+</g>
+<g transform="translate(505.3 47.0) scale(1.307384764706501) rotate(1.5 50.7 50.0)">
+<use href="#gK" x="9.35" y="17.00" fill="#0f4d44" stroke="#0f4d44" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gK" x="8.80" y="16.00" fill="#115247" stroke="#115247" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gK" x="8.25" y="15.00" fill="#135749" stroke="#135749" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gK" x="7.70" y="14.00" fill="#165d4c" stroke="#165d4c" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gK" x="7.15" y="13.00" fill="#18624e" stroke="#18624e" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gK" x="6.60" y="12.00" fill="#1a6751" stroke="#1a6751" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gK" x="6.05" y="11.00" fill="#1c6c53" stroke="#1c6c53" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gK" x="5.50" y="10.00" fill="#1e7156" stroke="#1e7156" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gK" x="4.95" y="9.00" fill="#207658" stroke="#207658" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gK" x="4.40" y="8.00" fill="#237c5b" stroke="#237c5b" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gK" x="3.85" y="7.00" fill="#25815d" stroke="#25815d" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gK" x="3.30" y="6.00" fill="#278660" stroke="#278660" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gK" x="2.75" y="5.00" fill="#298b62" stroke="#298b62" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gK" x="2.20" y="4.00" fill="#2b9065" stroke="#2b9065" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gK" x="1.65" y="3.00" fill="#2d9567" stroke="#2d9567" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gK" x="1.10" y="2.00" fill="#309b6a" stroke="#309b6a" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gK" x="0.55" y="1.00" fill="#32a06c" stroke="#32a06c" stroke-width="6.40" stroke-linejoin="round"/>
+</g>
+<g transform="translate(54.0 46.0) scale(1.307384764706501) rotate(-1.6 43.7 50.0)">
+<use href="#gB" fill="#1a6e55" stroke="#1a6e55" stroke-width="9.80" stroke-linejoin="round"/>
+<use href="#gB" fill="url(#face)" stroke="url(#face)" stroke-width="6.40" stroke-linejoin="round"/>
+<g clip-path="url(#cB)"><use href="#gB" fill="none" stroke="url(#shine)" stroke-width="8" stroke-linejoin="round"/></g>
+</g>
+<g transform="translate(179.9 43.0) scale(1.307384764706501) rotate(1.1 45.2 50.0)">
+<use href="#gR" fill="#1a6e55" stroke="#1a6e55" stroke-width="9.80" stroke-linejoin="round"/>
+<use href="#gR" fill="url(#face)" stroke="url(#face)" stroke-width="6.40" stroke-linejoin="round"/>
+<g clip-path="url(#cR)"><use href="#gR" fill="none" stroke="url(#shine)" stroke-width="8" stroke-linejoin="round"/></g>
+</g>
+<g transform="translate(309.8 48.0) scale(1.307384764706501) rotate(0.4 14.9 50.0)">
+<use href="#gI" fill="#1a6e55" stroke="#1a6e55" stroke-width="9.80" stroke-linejoin="round"/>
+<use href="#gI" fill="url(#face)" stroke="url(#face)" stroke-width="6.40" stroke-linejoin="round"/>
+<g clip-path="url(#cI)"><use href="#gI" fill="none" stroke="url(#shine)" stroke-width="8" stroke-linejoin="round"/></g>
+</g>
+<g transform="translate(360.6 44.0) scale(1.307384764706501) rotate(-1.2 50.8 50.0)">
+<use href="#gC" fill="#1a6e55" stroke="#1a6e55" stroke-width="9.80" stroke-linejoin="round"/>
+<use href="#gC" fill="url(#face)" stroke="url(#face)" stroke-width="6.40" stroke-linejoin="round"/>
+<g clip-path="url(#cC)"><use href="#gC" fill="none" stroke="url(#shine)" stroke-width="8" stroke-linejoin="round"/></g>
+</g>
+<g transform="translate(505.3 47.0) scale(1.307384764706501) rotate(1.5 50.7 50.0)">
+<use href="#gK" fill="#1a6e55" stroke="#1a6e55" stroke-width="9.80" stroke-linejoin="round"/>
+<use href="#gK" fill="url(#face)" stroke="url(#face)" stroke-width="6.40" stroke-linejoin="round"/>
+<g clip-path="url(#cK)"><use href="#gK" fill="none" stroke="url(#shine)" stroke-width="8" stroke-linejoin="round"/></g>
+</g>
+<g transform="translate(228.6 222.0) scale(1.1243508976475907) rotate(-3.5 43.7 50.0)">
+<use href="#gB" x="9.35" y="17.00" fill="#7a4513" stroke="#7a4513" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gB" x="8.80" y="16.00" fill="#804a15" stroke="#804a15" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gB" x="8.25" y="15.00" fill="#864f17" stroke="#864f17" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gB" x="7.70" y="14.00" fill="#8d5419" stroke="#8d5419" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gB" x="7.15" y="13.00" fill="#93591b" stroke="#93591b" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gB" x="6.60" y="12.00" fill="#995e1c" stroke="#995e1c" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gB" x="6.05" y="11.00" fill="#9f631e" stroke="#9f631e" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gB" x="5.50" y="10.00" fill="#a56820" stroke="#a56820" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gB" x="4.95" y="9.00" fill="#ab6d22" stroke="#ab6d22" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gB" x="4.40" y="8.00" fill="#b27224" stroke="#b27224" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gB" x="3.85" y="7.00" fill="#b87726" stroke="#b87726" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gB" x="3.30" y="6.00" fill="#be7c28" stroke="#be7c28" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gB" x="2.75" y="5.00" fill="#c4812a" stroke="#c4812a" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gB" x="2.20" y="4.00" fill="#ca862b" stroke="#ca862b" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gB" x="1.65" y="3.00" fill="#d08b2d" stroke="#d08b2d" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gB" x="1.10" y="2.00" fill="#d7902f" stroke="#d7902f" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gB" x="0.55" y="1.00" fill="#dd9531" stroke="#dd9531" stroke-width="6.40" stroke-linejoin="round"/>
+</g>
+<g transform="translate(342.6 218.0) scale(1.1243508976475907) rotate(3 53.7 50.0)">
+<use href="#gY" x="9.35" y="17.00" fill="#7a4513" stroke="#7a4513" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gY" x="8.80" y="16.00" fill="#804a15" stroke="#804a15" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gY" x="8.25" y="15.00" fill="#864f17" stroke="#864f17" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gY" x="7.70" y="14.00" fill="#8d5419" stroke="#8d5419" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gY" x="7.15" y="13.00" fill="#93591b" stroke="#93591b" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gY" x="6.60" y="12.00" fill="#995e1c" stroke="#995e1c" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gY" x="6.05" y="11.00" fill="#9f631e" stroke="#9f631e" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gY" x="5.50" y="10.00" fill="#a56820" stroke="#a56820" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gY" x="4.95" y="9.00" fill="#ab6d22" stroke="#ab6d22" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gY" x="4.40" y="8.00" fill="#b27224" stroke="#b27224" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gY" x="3.85" y="7.00" fill="#b87726" stroke="#b87726" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gY" x="3.30" y="6.00" fill="#be7c28" stroke="#be7c28" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gY" x="2.75" y="5.00" fill="#c4812a" stroke="#c4812a" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gY" x="2.20" y="4.00" fill="#ca862b" stroke="#ca862b" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gY" x="1.65" y="3.00" fill="#d08b2d" stroke="#d08b2d" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gY" x="1.10" y="2.00" fill="#d7902f" stroke="#d7902f" stroke-width="6.40" stroke-linejoin="round"/>
+<use href="#gY" x="0.55" y="1.00" fill="#dd9531" stroke="#dd9531" stroke-width="6.40" stroke-linejoin="round"/>
+</g>
+<g transform="translate(228.6 222.0) scale(1.1243508976475907) rotate(-3.5 43.7 50.0)">
+<use href="#gB" fill="#8a5516" stroke="#8a5516" stroke-width="9.80" stroke-linejoin="round"/>
+<use href="#gB" fill="url(#faceGold)" stroke="url(#faceGold)" stroke-width="6.40" stroke-linejoin="round"/>
+<g clip-path="url(#cB)"><use href="#gB" fill="none" stroke="url(#shine)" stroke-width="8" stroke-linejoin="round"/></g>
+</g>
+<g transform="translate(342.6 218.0) scale(1.1243508976475907) rotate(3 53.7 50.0)">
+<use href="#gY" fill="#8a5516" stroke="#8a5516" stroke-width="9.80" stroke-linejoin="round"/>
+<use href="#gY" fill="url(#faceGold)" stroke="url(#faceGold)" stroke-width="6.40" stroke-linejoin="round"/>
+<g clip-path="url(#cY)"><use href="#gY" fill="none" stroke="url(#shine)" stroke-width="8" stroke-linejoin="round"/></g>
+</g>
+<g transform="translate(660 40)"><use href="#spark" transform="scale(0.9)" fill="#ffe9a0" stroke="#0a2a2c" stroke-width="5" stroke-linejoin="round" paint-order="stroke"/><animateTransform attributeName="transform" type="scale" values="1;.7;1" dur="2.4s" begin="0s" repeatCount="indefinite"/></g>
+<g transform="translate(30 572)"><use href="#spark" transform="scale(0.7)" fill="#ffe9a0" stroke="#0a2a2c" stroke-width="5" stroke-linejoin="round" paint-order="stroke"/><animateTransform attributeName="transform" type="scale" values="1;.7;1" dur="2.4s" begin="0.8s" repeatCount="indefinite"/></g>
+<g transform="translate(34 30)"><use href="#spark" transform="scale(0.45)" fill="#ffe9a0" stroke="#0a2a2c" stroke-width="5" stroke-linejoin="round" paint-order="stroke"/><animateTransform attributeName="transform" type="scale" values="1;.7;1" dur="2.4s" begin="1.4s" repeatCount="indefinite"/></g>
+<g transform="translate(668 584)"><use href="#spark" transform="scale(0.55)" fill="#ffe9a0" stroke="#0a2a2c" stroke-width="5" stroke-linejoin="round" paint-order="stroke"/><animateTransform attributeName="transform" type="scale" values="1;.7;1" dur="2.4s" begin="0.4s" repeatCount="indefinite"/></g>
 </svg>
