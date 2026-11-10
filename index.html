@@ -3,307 +3,326 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-<meta name="theme-color" content="#081c22">
+<meta name="theme-color" content="#0b1f3a">
 <title>Brick by Brick</title>
 <link rel="icon" href="logo.svg" type="image/svg+xml">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700;800&display=swap" rel="stylesheet">
 <style>
+  /* ===== Brick by Brick — visual "low-poly com brilho" (redesign 10/11/2026) ===== */
   :root{
-    --bg1:#06161c; --bg2:#103b3d; --line:rgba(170,215,198,.30); --txt:#e9f6ef; --soft:#9cc4b6;
-    --gold:#f2c46d; --gold2:#e5a73f; --ink:#3a2600;
-    --sans:'Outfit','Inter',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
-    --serif:'Cormorant Garamond','GFS Baskerville',Georgia,'Times New Roman',serif;
+    --moss:#2c5a4c; --moss2:#234a40; --moss3:#17372f; --line:rgba(169,211,184,.35); --txt:#eaf6e6; --soft:#cfe9d4;
+    --cream:#fff4d6; --pink:#e2527a; --y1:#ffe58a; --y2:#f6c443; --ink:#4a3a0a; --ydark:#b98a14;
+    --font:'Fredoka','Nunito',ui-rounded,'Poppins',system-ui,sans-serif;
   }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-  html,body{margin:0;height:100%;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:var(--txt);
-    font-family:var(--sans);overflow:hidden;touch-action:manipulation;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;overscroll-behavior:none}
+  html,body{margin:0;height:100%;background:#0b1f3a;color:var(--txt);font-family:var(--font);overflow:hidden;
+    touch-action:manipulation;user-select:none;-webkit-user-select:none;-webkit-touch-callout:none;overscroll-behavior:none}
   .hidden{display:none !important}
-  #stars{position:fixed;inset:0;pointer-events:none;opacity:.8}
-  svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
-  .serif{font-family:var(--serif);font-weight:700}
-
-  /* ---------- vidro (estilo da referência 3) ---------- */
-  .glass{background:linear-gradient(180deg,rgba(44,92,94,.58),rgba(22,58,62,.62));border:1.5px solid var(--line);border-radius:26px;
-    box-shadow:0 12px 32px rgba(0,0,0,.35),inset 0 1px 0 rgba(255,255,255,.07)}
-  .pill{display:inline-flex;align-items:center;gap:8px;height:44px;padding:0 14px;border-radius:16px;font-weight:600;font-size:18px;white-space:nowrap;
-    background:linear-gradient(180deg,rgba(44,92,94,.6),rgba(18,48,52,.7));border:1.5px solid var(--line);box-shadow:0 4px 0 rgba(0,0,0,.28)}
-  .pill .star{width:20px;height:20px;fill:var(--gold);stroke:none}
-  .coin{display:inline-block;width:20px;height:20px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff3b0,#ffc300 55%,#c98a00);border:2px solid #a86b00;flex:none}
-  .round{width:44px;height:44px;border-radius:16px;display:grid;place-items:center;color:var(--gold);cursor:pointer;padding:0;
-    background:linear-gradient(180deg,rgba(44,92,94,.6),rgba(18,48,52,.75));border:1.5px solid var(--line);box-shadow:0 4px 0 rgba(0,0,0,.28)}
-  .round:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.28)}
+  #bgArt{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;display:block}
+  svg.ic{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round;flex:none}
   body:not(.muted) .i-off,body.muted .i-on{display:none}
 
-  .btn{font-family:var(--sans);font-weight:700;font-size:20px;letter-spacing:.3px;display:inline-flex;align-items:center;justify-content:center;gap:10px;
-    border-radius:22px;padding:0 24px;height:58px;cursor:pointer;color:var(--ink);
-    background:linear-gradient(180deg,#f9dc92,#eab04a);border:1.5px solid rgba(255,238,190,.75);box-shadow:0 5px 0 #a87420,0 14px 22px rgba(0,0,0,.35);
+  /* ---------- botões ---------- */
+  .btn{font-family:var(--font);font-weight:700;font-size:19px;letter-spacing:.5px;display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    border-radius:26px;padding:0 22px;height:54px;cursor:pointer;color:var(--ink);border:0;
+    background:linear-gradient(180deg,var(--y1),var(--y2));box-shadow:0 5px 0 var(--ydark),0 10px 20px rgba(0,0,0,.35),inset 0 2px 0 rgba(255,255,255,.6);
     transition:transform .08s,box-shadow .08s}
-  .btn:active{transform:translateY(4px);box-shadow:0 1px 0 #a87420,0 6px 12px rgba(0,0,0,.35)}
-  .btn.alt{color:var(--txt);background:linear-gradient(180deg,rgba(48,98,100,.7),rgba(22,58,62,.8));border:1.5px solid var(--line);box-shadow:0 5px 0 rgba(0,0,0,.32),0 12px 20px rgba(0,0,0,.25)}
-  .btn.alt:active{box-shadow:0 1px 0 rgba(0,0,0,.32)}
-  .btn.alt .ic{color:var(--gold)}
-  .btn.big{width:100%;height:66px;font-size:26px;letter-spacing:2px}
-  .btn.big .ic{width:28px;height:28px}
-  .btn:disabled{filter:saturate(.5) brightness(.85);cursor:default}
-  .btn.alt:disabled{filter:none;opacity:.85;color:var(--gold)}
-  .xp{height:7px;border-radius:99px;background:rgba(0,0,0,.4);border:1px solid rgba(170,215,198,.25);overflow:hidden;margin:7px 4px 0}
-  .xp i{display:block;height:100%;width:0;background:linear-gradient(90deg,#f6d489,var(--gold2));border-radius:99px}
+  .btn:active{transform:translateY(4px);box-shadow:0 1px 0 var(--ydark),0 4px 10px rgba(0,0,0,.35)}
+  .btn.alt{color:var(--txt);background:linear-gradient(180deg,#3d7564,#2a5547);box-shadow:0 5px 0 #173a30,0 10px 18px rgba(0,0,0,.3),inset 0 1px 0 rgba(255,255,255,.18)}
+  .btn.alt:active{box-shadow:0 1px 0 #173a30}
+  .btn.grey{color:#e8f5e4;background:linear-gradient(180deg,#8fa59a,#6f857b);box-shadow:0 5px 0 #4c6258,0 10px 20px rgba(0,0,0,.35)}
+  .btn.big{width:min(78%,300px);height:62px;font-size:27px;letter-spacing:2px;border-radius:31px}
+  .btn:disabled{cursor:default}
+  .btn.mini{height:40px;padding:0 16px;font-size:15px;border-radius:20px;box-shadow:0 3px 0 var(--ydark),0 6px 12px rgba(0,0,0,.3)}
+  .btn.alt.mini{box-shadow:0 3px 0 #173a30}
+  .gold{color:var(--y1)}
+  .coin{display:inline-block;width:20px;height:20px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#fff3b0,#ffc83d 55%,#d39a12);border:2px solid #b98a14;flex:none;vertical-align:-4px}
 
-  .screen{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;padding:calc(14px + env(safe-area-inset-top)) 16px 16px;gap:12px;overflow:auto}
-  .nav-screen{padding-bottom:calc(120px + env(safe-area-inset-bottom))}
+  /* ---------- telas ---------- */
+  .screen{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;gap:12px;overflow:auto;
+    padding:calc(env(safe-area-inset-top) + 148px) 16px calc(env(safe-area-inset-bottom) + 112px)}
   .screen>*{flex-shrink:0}
-  .nav-screen::after{content:"";flex:0 0 calc(96px + env(safe-area-inset-bottom))}
-  .screen::after{content:"";flex:0 0 1px}
-  .head{display:flex;align-items:center;justify-content:space-between;width:min(430px,100%)}
-  .head h2{margin:0;font-size:40px;line-height:1;color:#f1fbf6}
+  .head{width:min(430px,100%);display:flex;align-items:center;justify-content:space-between}
+  .head h2{margin:0;font-size:30px;font-weight:700;color:#f4fbf2;text-shadow:0 2px 0 rgba(0,0,0,.35)}
+  .card{width:min(430px,100%);padding:16px 18px;border-radius:24px;background:linear-gradient(180deg,rgba(44,90,76,.88),rgba(30,66,58,.9));
+    border:2px solid var(--line);box-shadow:0 8px 20px rgba(0,0,0,.3)}
+  .card h3{margin:0 0 10px;font-size:18px;color:var(--y1);font-weight:700}
+  .card ul{margin:0;padding:0;list-style:none;display:grid;gap:9px;font-family:'Nunito',var(--font);font-weight:600;font-size:15px;line-height:1.4}
+  .card li{padding-left:18px;position:relative}
+  .card li:before{content:"";position:absolute;left:0;top:.45em;width:9px;height:9px;border-radius:50%;background:var(--y2)}
+  .card li b{color:var(--y1)}
+  .sub{color:var(--soft);font-family:'Nunito',var(--font);font-weight:600;font-size:14px}
+  kbd{background:rgba(255,255,255,.12);border:1px solid var(--line);border-bottom-width:3px;border-radius:8px;padding:1px 7px;font-family:inherit;font-size:.9em}
+
+  /* ---------- barra superior (avatar, nome, nível, XP, moedas) ---------- */
+  #topbar{position:fixed;left:0;right:0;top:0;z-index:15;padding:calc(env(safe-area-inset-top) + 14px) 0 0;pointer-events:none}
+  #topbar>*{pointer-events:auto}
+  .tb{margin:0 auto;width:min(462px,100%);padding:0 20px 16px;border-radius:0 0 22px 22px;
+    background:linear-gradient(180deg,rgba(44,90,76,.95),rgba(35,74,64,.92));box-shadow:0 6px 18px rgba(0,0,0,.35);
+    display:grid;grid-template-columns:60px 1fr;gap:14px;align-items:center}
+  #tbAvBox{width:60px;height:60px;border-radius:16px;background:radial-gradient(circle at 50% 35%,#4c8c7a,#244a40);border:2px solid #a9d3b8;overflow:hidden;cursor:pointer}
+  #tbAv{width:60px;height:60px;display:block}
+  .who2{display:flex;flex-direction:column;gap:10px;min-width:0}
+  .r1{display:flex;align-items:center;justify-content:space-between;gap:10px}
+  #tbName{font-weight:700;font-size:18px;text-shadow:0 1px 0 #0006;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .chip{padding:5px 14px;border-radius:14px;background:linear-gradient(180deg,var(--y1),var(--y2));color:var(--ink);font-weight:700;font-size:14px;letter-spacing:.5px;box-shadow:0 3px 0 var(--ydark);white-space:nowrap}
+  .r2{display:flex;align-items:center;gap:10px;font-size:12px;font-weight:600;color:var(--soft);white-space:nowrap}
+  .xp{flex:1;height:10px;border-radius:5px;background:#0b1f2a;box-shadow:inset 0 1px 2px #0008;overflow:hidden}
+  .xp i{display:block;height:100%;width:0;border-radius:5px;background:linear-gradient(90deg,#ffe58a,#f6c443)}
+  .pillrow{width:min(462px,100%);margin:10px auto 0;padding:0 16px;display:flex}
+  .pill{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:36px;min-width:120px;padding:0 16px;border-radius:18px;background:var(--cream);color:var(--pink);font-weight:700;font-size:16px;box-shadow:0 3px 0 rgba(0,0,0,.18)}
 
   /* ---------- início ---------- */
-  .topbar{display:flex;gap:10px;align-items:flex-start;width:min(430px,100%)}
-  .grow{flex:1}
-  .lvl{width:128px}
-  .stack{margin:auto 0;display:flex;flex-direction:column;align-items:center;gap:12px;width:min(380px,100%)}
-  .logo{width:min(72vw,300px);height:auto;filter:drop-shadow(0 8px 14px rgba(0,0,0,.45))}
-  .scene{width:100%;height:clamp(200px,32vh,300px);border-radius:28px;overflow:hidden;position:relative;border:1.5px solid var(--line);
-    background:radial-gradient(120% 90% at 80% 12%,rgba(255,244,200,.16),transparent 55%),linear-gradient(180deg,#0a2430 0%,#10393f 62%,#1a5352 100%);
-    box-shadow:0 14px 34px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.07);display:flex;justify-content:center}
-  #hero{height:100%;width:auto;display:block}
-  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%}
-  .row2 .btn{width:100%;height:56px;font-size:17px;padding:0 10px}
+  #menu{padding-top:calc(env(safe-area-inset-top) + 150px);justify-content:space-between}
+  #logoSlot{min-height:0}            /* espaço reservado para o logo novo (a Carol vai mandar) */
+  #logoSlot img{width:min(64vw,260px);height:auto;filter:drop-shadow(0 8px 14px rgba(0,0,0,.45))}
+  .heroBox{position:relative;width:min(430px,100%);flex:1 1 auto;min-height:260px}
+  #hero{position:absolute;inset:0;width:100%;height:100%;display:block}
+  .cta{display:flex;flex-direction:column;align-items:center;gap:12px;width:100%}
+  #homeRec{display:inline-flex;align-items:center;gap:8px;padding:6px 16px;border-radius:16px;background:rgba(11,31,42,.82);border:1.5px solid var(--line);font-weight:700;font-size:14px;color:var(--y1)}
 
   /* ---------- menu inferior ---------- */
-  #nav{position:fixed;left:50%;bottom:calc(14px + env(safe-area-inset-bottom));transform:translateX(-50%);width:min(430px,calc(100% - 28px));z-index:20;
-    display:flex;gap:6px;padding:8px;border-radius:28px;background:linear-gradient(180deg,rgba(30,70,74,.92),rgba(14,40,44,.95));border:1.5px solid var(--line);box-shadow:0 14px 30px rgba(0,0,0,.5)}
-  #nav button{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 4px 7px;border-radius:20px;border:0;background:transparent;color:var(--soft);font:600 13px var(--sans);cursor:pointer}
-  #nav button .ic{width:24px;height:24px}
-  #nav button.on{background:linear-gradient(180deg,#f9dc92,#eab04a);color:var(--ink);box-shadow:0 3px 0 #a87420}
+  #nav{position:fixed;left:0;right:0;bottom:0;z-index:20;padding:12px 10px calc(env(safe-area-inset-bottom) + 14px);display:flex;justify-content:center;
+    background:linear-gradient(0deg,rgba(11,31,40,.96) 58%,rgba(11,31,40,0))}
+  #nav .in{display:flex;justify-content:space-around;width:min(462px,100%)}
+  #nav button{position:relative;width:20%;display:flex;flex-direction:column;align-items:center;gap:2px;font:600 12px var(--font);color:#e8f5e4;text-shadow:0 1px 2px #000a;background:none;border:0;cursor:pointer;padding:0}
+  #nav button .st{width:58px;height:58px;border-radius:18px;display:grid;place-items:center;background:linear-gradient(180deg,#ecf8e6,#9dbb98);border:2.5px solid #6f9a74;
+    box-shadow:inset 0 0 0 3px rgba(255,255,255,.35),0 5px 4px rgba(0,0,0,.45);color:#46684f}
+  #nav button .st svg{width:28px;height:28px;stroke-width:2.6}
+  #nav button.on{color:var(--y1)}
+  #nav button.on .st{background:linear-gradient(180deg,#fff3c4,#e3b94a);border-color:var(--ydark)}
+  #duelDot{position:absolute;top:-4px;right:calc(50% - 36px);min-width:22px;height:22px;border-radius:11px;background:var(--pink);color:#fff;font-style:normal;font-weight:700;font-size:12px;display:grid;place-items:center;border:2px solid #fff;box-shadow:0 2px 4px #0006;padding:0 5px}
 
-  /* ---------- loja / perfil / ajuda ---------- */
-  .tabs{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;width:min(430px,100%)}
-  .tab{font-family:var(--sans);font-weight:600;font-size:15px;padding:9px 16px;border-radius:14px;border:1.5px solid var(--line);background:rgba(20,52,56,.7);color:var(--txt);cursor:pointer}
-  .tab.on{background:linear-gradient(180deg,#f9dc92,#eab04a);color:var(--ink);border-color:transparent}
-  .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;width:min(430px,100%)}
-  .item{padding:12px;display:flex;flex-direction:column;align-items:center;gap:8px;border-radius:22px;
-    background:linear-gradient(180deg,rgba(44,92,94,.58),rgba(22,58,62,.62));border:1.5px solid var(--line);box-shadow:0 12px 32px rgba(0,0,0,.35)}
-  .item.eq{border-color:var(--gold);box-shadow:0 0 0 1px var(--gold) inset,0 12px 32px rgba(0,0,0,.35)}
-  .item canvas{width:88px;height:88px;border-radius:16px;background:rgba(4,20,24,.55);border:1px solid rgba(170,215,198,.15)}
-  .item .nm{font-weight:600;font-size:17px}
-  .item .btn{width:100%;height:42px;font-size:16px;padding:0 6px;border-radius:15px;box-shadow:0 4px 0 #a87420}
-  .item .btn.alt{box-shadow:0 4px 0 rgba(0,0,0,.32)}
-  .card{width:min(430px,100%);padding:18px 20px}
-  .card h3{margin:0 0 10px;font-size:20px;color:var(--gold);display:flex;align-items:center;gap:8px}
-  .card ul{margin:0;padding:0;list-style:none;display:grid;gap:9px;color:var(--txt);font-size:16px;line-height:1.35}
-  .card li b{color:var(--gold);font-weight:600}
-  .card li{padding-left:18px;position:relative}
-  .card li:before{content:"";position:absolute;left:0;top:.5em;width:8px;height:8px;background:var(--gold);transform:rotate(45deg);border-radius:2px}
-  kbd{background:rgba(255,255,255,.1);border:1px solid var(--line);border-bottom-width:3px;border-radius:7px;padding:1px 7px;font-family:inherit;font-size:.9em}
-  .prof{display:flex;flex-direction:column;align-items:center;gap:2px;text-align:center}
-  .prof canvas{width:120px;height:120px}
-  .prof .big{font-size:52px;line-height:1}
-  .prof .xp{width:80%;height:9px}
-  .prof .sub{color:var(--soft);font-size:14px;margin-top:6px}
-  .stat{display:flex;justify-content:space-between;align-items:baseline;padding:11px 0;border-bottom:1px solid rgba(170,215,198,.14);font-size:17px}
+  /* ---------- loja ---------- */
+  #shop{gap:10px}
+  .pv{position:relative;width:min(430px,100%);height:206px;border-radius:26px;overflow:hidden;background:linear-gradient(180deg,rgba(20,52,50,.82),rgba(14,36,42,.86));border:2px solid var(--line);box-shadow:0 8px 20px #0005}
+  #shopPv{position:absolute;inset:0;width:100%;height:100%}
+  #shopName{position:absolute;left:14px;top:14px;padding:6px 14px;border-radius:14px;background:#0b1f2acc;font-weight:700;font-size:15px;color:var(--y1)}
+  .tabs{width:min(430px,100%);display:flex;gap:6px}
+  .tab{flex:1;height:38px;border-radius:19px;border:0;background:rgba(255,255,255,.1);color:var(--soft);font:700 13px var(--font);white-space:nowrap;cursor:pointer;padding:0 4px}
+  .tab.on{background:linear-gradient(180deg,var(--y1),var(--y2));color:var(--ink);box-shadow:0 3px 0 var(--ydark)}
+  .grid{width:min(430px,100%);display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .item{position:relative;height:96px;border-radius:20px;border:2px solid rgba(169,211,184,.3);background:rgba(255,255,255,.07);display:flex;flex-direction:column;align-items:center;justify-content:space-between;padding:8px;cursor:pointer}
+  .item canvas{width:64px;height:48px}
+  .item.r1{border-color:rgba(127,209,160,.55)} .item.r2{border-color:rgba(124,196,245,.75);box-shadow:0 0 10px rgba(124,196,245,.25)} .item.r3{border-color:rgba(255,216,74,.85);box-shadow:0 0 14px rgba(255,216,74,.35)}
+  .item.eq{border-color:#7fd1a0;box-shadow:0 0 0 2px rgba(127,209,160,.35)}
+  .item.sel{border-color:var(--y2);background:rgba(246,196,67,.14);box-shadow:0 0 0 3px #f6c44355}
+  .item.lock{opacity:.5;cursor:default}
+  .tag{height:22px;border-radius:11px;padding:0 10px;display:flex;align-items:center;gap:4px;font-weight:700;font-size:12px;background:var(--cream);color:var(--pink);white-space:nowrap}
+  .tag .coin{width:14px;height:14px;border-width:1.5px;vertical-align:0}
+  .tag.own{background:#3b8f6b;color:#fff}.tag.use{background:#7fd1a0;color:#143a2a}.tag.soon{background:#ffffff22;color:var(--soft)}
+  #shopBuy{width:min(78%,300px);margin-top:4px}
+
+  /* ---------- perfil / duelo / ajustes ---------- */
+  .prof{display:flex;flex-direction:column;align-items:center;gap:6px;text-align:center}
+  .prof canvas{width:130px;height:130px}
+  .prof .lv{font-size:34px;font-weight:700;line-height:1;color:#f4fbf2}
+  .prof .xp{width:80%;flex:none}
+  .stat{display:flex;justify-content:space-between;align-items:baseline;padding:10px 0;border-bottom:1px solid rgba(169,211,184,.18);font-family:'Nunito',var(--font);font-weight:700;font-size:15px}
   .stat:last-child{border:0}
+  .stat b{font-family:var(--font);font-size:22px;color:var(--y1)}
   .acct .btn{width:100%}
   .who{display:flex;gap:12px;align-items:center}
-  .who b{font-size:17px;color:#f1fbf6}
-  .av{width:44px;height:44px;border-radius:50%;background:#2c5c55 center/cover;border:2px solid var(--gold);flex:none}
-  .stat b{font-family:var(--serif);font-size:26px;color:#f1fbf6}
-
-  /* ---------- jogo ---------- */
-  #game{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center}
-  #stage{display:flex;gap:14px;align-items:center;justify-content:center;width:100%;height:100%;padding:8px}
-  canvas.arena{flex-shrink:0;border-radius:24px;border:1.5px solid var(--line);box-shadow:0 10px 40px rgba(0,0,0,.5);background:#071820;touch-action:none}
-  .topbtns{position:fixed;top:10px;right:10px;display:flex;gap:8px;z-index:5}
-  @media (pointer:coarse){
-    .topbtns{top:calc(76px + env(safe-area-inset-top));left:10px;right:auto;flex-direction:column}
-    #stage{padding:0}
-    canvas.arena{border-radius:0;border:0;box-shadow:none}}
-  /* colher de pedreiro (cimento) */
-  #gTool{position:fixed;right:22px;top:calc(122px + env(safe-area-inset-top));z-index:5;width:58px;height:58px;padding:0;border:0;background:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
-  #gTool .dia{position:absolute;inset:6px;transform:rotate(45deg);border-radius:9px;border:3px solid #7d2f4b;background:linear-gradient(135deg,#b58cff,#7a45d6);box-shadow:0 4px 0 rgba(0,0,0,.35),0 8px 14px rgba(0,0,0,.35)}
-  #gTool svg{position:absolute;left:13px;top:13px;width:32px;height:32px;fill:#e9eef7;stroke:#2a1a40;stroke-width:1.3;stroke-linejoin:round}
-  #gTool .n{position:absolute;right:-8px;bottom:-6px;min-width:24px;height:24px;border-radius:12px;background:#ffd166;color:#3a2200;font:700 14px/24px var(--sans);text-align:center;border:2px solid #a86b00}
-  #gTool:active .dia{transform:rotate(45deg) translateY(-3px)}
-  #gTool.armed .dia{background:linear-gradient(135deg,#fff3b0,#ffc83d);border-color:#fff;box-shadow:0 0 0 3px rgba(255,255,255,.6),0 0 22px #ffe27a}
-  #gTool.empty{filter:grayscale(.8) brightness(.8)}
-  #gUndo{position:fixed;right:22px;top:calc(196px + env(safe-area-inset-top));z-index:5;width:58px;height:58px;padding:0;border:0;background:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
-  #gUndo .dia{position:absolute;inset:6px;transform:rotate(45deg);border-radius:9px;border:3px solid #1d5a63;background:linear-gradient(135deg,#7fe3d4,#2f9fb0);box-shadow:0 4px 0 rgba(0,0,0,.35),0 8px 14px rgba(0,0,0,.35)}
-  #gUndo svg{position:absolute;left:13px;top:13px;width:32px;height:32px;fill:none;stroke:#fff;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
-  #gUndo .n{position:absolute;right:-8px;bottom:-6px;min-width:24px;height:24px;border-radius:12px;background:#ffd166;color:#3a2200;font:700 14px/24px var(--sans);text-align:center;border:2px solid #a86b00}
-  #gUndo:active .dia{transform:rotate(45deg) translateY(-3px)}
-  #gUndo.empty{filter:grayscale(.8) brightness(.8)}
-  #gSun{position:fixed;right:22px;top:calc(270px + env(safe-area-inset-top));z-index:5;width:58px;height:58px;padding:0;border:0;background:none;cursor:pointer;-webkit-tap-highlight-color:transparent}
-  #gSun .dia{position:absolute;inset:6px;transform:rotate(45deg);border-radius:9px;border:3px solid #8a5a10;background:linear-gradient(135deg,#ffe58a,#f2a933);box-shadow:0 4px 0 rgba(0,0,0,.35),0 8px 14px rgba(0,0,0,.35)}
-  #gSun svg{position:absolute;left:13px;top:13px;width:32px;height:32px;fill:#fff3b0;stroke:#6b4300;stroke-width:1.8;stroke-linecap:round}
-  #gSun .n{position:absolute;right:-8px;bottom:-6px;min-width:24px;height:24px;border-radius:12px;background:#ffd166;color:#3a2200;font:700 14px/24px var(--sans);text-align:center;border:2px solid #a86b00}
-  #gSun:active .dia{transform:rotate(45deg) translateY(-3px)}
-  #gSun.empty{filter:grayscale(.8) brightness(.8)}
-  #gSun.armed .dia{box-shadow:0 0 0 3px rgba(255,255,255,.6),0 0 22px #ffe27a}
-  .gold{color:var(--gold)}
-  input{font-family:var(--sans);font-size:18px;font-weight:500;width:100%;height:50px;padding:0 16px;border-radius:16px;color:var(--txt);user-select:text;-webkit-user-select:text;
-    background:rgba(4,20,24,.55);border:1.5px solid var(--line);outline:none}
-  input:focus{border-color:var(--gold)}
-  input::placeholder{color:rgba(156,196,182,.6)}
-  .form{display:grid;gap:10px}
-  .form label{display:grid;gap:6px;font-size:14px;color:var(--soft);font-weight:600}
-  .frow{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid rgba(170,215,198,.14)}
+  .who b{font-size:17px}
+  .av{width:44px;height:44px;border-radius:50%;background:#2c5c55 center/cover;border:2px solid var(--y2);flex:none}
+  input{font-family:var(--font);font-size:17px;font-weight:600;width:100%;height:48px;padding:0 16px;border-radius:24px;color:var(--txt);user-select:text;-webkit-user-select:text;
+    background:rgba(11,31,42,.6);border:2px solid var(--line);outline:none}
+  input:focus{border-color:var(--y2)} input::placeholder{color:rgba(207,233,212,.55)}
+  .frow{display:flex;align-items:center;gap:10px;padding:10px 0;border-top:1px solid rgba(169,211,184,.16)}
   .frow:first-child{border-top:0}
   .frow .tx{flex:1;min-width:0;line-height:1.25}
-  .frow .tx b{display:block;color:#f1fbf6;font-size:16px;overflow-wrap:anywhere}
-  .frow .tx span{color:var(--soft);font-size:13px}
-  .frow .tx .gold{color:var(--gold)}
+  .frow .tx b{display:block;font-size:16px;overflow-wrap:anywhere}
+  .frow .tx span{color:var(--soft);font-family:'Nunito',var(--font);font-weight:600;font-size:13px}
+  .frow .tx .gold{color:var(--y1)}
   .frow .av{width:38px;height:38px}
-  .btn.mini{height:42px;padding:0 16px;font-size:16px;border-radius:15px;box-shadow:0 3px 0 #a87420,0 8px 14px rgba(0,0,0,.3)}
-  .btn.alt.mini{box-shadow:0 3px 0 rgba(0,0,0,.32)}
-  .empty-note{color:var(--soft);font-size:15px;padding:6px 0}
+  .empty-note{color:var(--soft);font-family:'Nunito',var(--font);font-weight:600;font-size:14px;padding:6px 0}
+  .set{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 0;font-weight:600;font-size:16px}
+  .set+.set{border-top:1px solid rgba(169,211,184,.16)}
+  .round{width:48px;height:48px;border-radius:16px;display:grid;place-items:center;color:var(--y1);cursor:pointer;padding:0;
+    background:rgba(35,74,64,.9);border:2px solid #a9d3b8;box-shadow:0 4px 0 rgba(0,0,0,.3)}
+  .round:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.3)}
   .vs{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;width:100%;padding:6px 0}
   .vs div{display:flex;flex-direction:column;gap:2px;align-items:center}
   .vs span{color:var(--soft);font-size:15px;font-weight:600}
-  .vs b{font-family:var(--serif);font-size:38px;line-height:1;color:#f6fbf8}
-  .vs .win span,.vs .win b{color:var(--gold)}
+  .vs b{font-size:34px;line-height:1}
+  .vs .win span,.vs .win b{color:var(--y1)}
   .vs em{font-style:normal;color:var(--soft);font-size:22px}
-  #overlay,#modal{position:fixed;inset:0;background:rgba(2,10,14,.7);display:flex;align-items:center;justify-content:center;z-index:10;padding:20px}
+
+  /* ---------- jogo ---------- */
+  #game{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#0b1f3a}
+  #stage{display:flex;gap:14px;align-items:center;justify-content:center;width:100%;height:100%;padding:8px}
+  canvas.arena{flex-shrink:0;border-radius:24px;border:2px solid var(--line);box-shadow:0 10px 40px rgba(0,0,0,.5);background:#0a1b36;touch-action:none}
+  .topbtns{position:fixed;top:10px;right:10px;display:flex;gap:8px;z-index:5}
+  @media (pointer:coarse){
+    .topbtns{top:calc(74px + env(safe-area-inset-top));left:16px;right:auto;flex-direction:column}
+    #stage{padding:0}
+    canvas.arena{border-radius:0;border:0;box-shadow:none}}
+  /* poderes: quadrados arredondados empilhados no canto direito */
+  .pw{position:fixed;right:18px;z-index:30;width:62px;height:62px;padding:0;border:0;background:none;cursor:pointer}
+  .pw .dia{position:absolute;inset:0;border-radius:20px;border:2.5px solid rgba(255,255,255,.55);box-shadow:0 5px 0 rgba(0,0,0,.35),0 10px 16px rgba(0,0,0,.35),inset 0 2px 0 rgba(255,255,255,.35)}
+  .pw svg{position:absolute;left:15px;top:15px;width:32px;height:32px}
+  .pw .n{position:absolute;right:-7px;bottom:-7px;min-width:26px;height:26px;border-radius:13px;background:linear-gradient(180deg,#ffe58a,#f6c443);color:#4a3a0a;font:700 14px/23px var(--font);text-align:center;border:2px solid #b98a14}
+  .pw:active .dia{transform:translateY(3px)}
+  .pw.empty{filter:grayscale(.8) brightness(.8)}
+  .pw.armed .dia{box-shadow:0 0 0 3px rgba(255,255,255,.7),0 0 22px #ffe27a}
+  #gTool{top:calc(124px + env(safe-area-inset-top))} #gTool .dia{background:linear-gradient(180deg,#a67cf0,#7a4fd0)}
+  #gTool svg{fill:#fff;stroke:#fff;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+  #gTool.armed .dia{background:linear-gradient(180deg,#fff3b0,#ffc83d)}
+  #gUndo{top:calc(200px + env(safe-area-inset-top))} #gUndo .dia{background:linear-gradient(180deg,#5fd3c8,#2fa7a4)}
+  #gUndo svg{fill:none;stroke:#fff;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+  #gSun{top:calc(276px + env(safe-area-inset-top))} #gSun .dia{background:linear-gradient(180deg,#ffd36b,#f0a82c)}
+  #gSun svg{fill:#fff6c9;stroke:#fff;stroke-width:2.2;stroke-linecap:round}
+
+  /* ---------- janelas (pausa, fim de jogo, duelo) ---------- */
+  #overlay,#modal{position:fixed;inset:0;background:rgba(5,16,24,.72);display:flex;align-items:center;justify-content:center;z-index:10;padding:20px}
   #modal{z-index:40}
-  .panel{padding:26px 22px;display:flex;flex-direction:column;gap:12px;align-items:center;text-align:center;max-width:380px;width:100%;
-    background:linear-gradient(180deg,rgba(44,92,94,.9),rgba(18,48,52,.95));border:1.5px solid var(--line);border-radius:28px;box-shadow:0 20px 60px rgba(0,0,0,.6)}
-  .panel h2{margin:0;font-family:var(--serif);font-weight:700;font-size:42px;line-height:1;color:#f6fbf8}
-  .panel p{margin:0;color:var(--soft);font-size:18px}
+  .panel{padding:26px 22px;display:flex;flex-direction:column;gap:12px;align-items:center;text-align:center;max-width:370px;width:100%;
+    background:linear-gradient(180deg,rgba(44,90,76,.97),rgba(30,66,58,.98));border:2px solid #a9d3b8;border-radius:28px;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+  .panel h2{margin:0;font-weight:700;font-size:34px;line-height:1.05;color:#f4fbf2;text-shadow:0 2px 0 rgba(0,0,0,.3)}
+  .panel p{margin:0;color:var(--soft);font-family:'Nunito',var(--font);font-weight:700;font-size:16px}
   .panel .btn{width:100%}
-  #nophys{position:fixed;inset:0;z-index:50;background:#071820;display:flex;align-items:center;justify-content:center;text-align:center;padding:30px;font-size:20px}
+  #nophys{position:fixed;inset:0;z-index:50;background:#0b1f3a;display:flex;align-items:center;justify-content:center;text-align:center;padding:30px;font-size:20px}
   @media (pointer:fine){.only-touch{display:none}}
   @media (pointer:coarse){.only-kbd{display:none}}
 </style>
 </head>
 <body>
-<canvas id="stars"></canvas>
+<canvas id="bgArt" aria-hidden="true"></canvas>
+<canvas id="stars" class="hidden" aria-hidden="true"></canvas>
 <div id="nophys" class="hidden">Não consegui carregar o motor de física.<br>Verifique sua internet e recarregue a página.</div>
 
-<!-- ============ INÍCIO ============ -->
-<div id="menu" class="screen nav-screen">
-  <div class="topbar">
-    <div class="lvl">
-      <div class="pill"><svg class="star" viewBox="0 0 24 24"><path d="M12 2.8l2.8 5.9 6.4.8-4.7 4.4 1.2 6.4L12 17.2 6.3 20.3l1.2-6.4L2.8 9.5l6.4-.8z"/></svg>Nv. <span id="lvlNum">1</span></div>
-      <div class="xp"><i id="xpFill"></i></div>
+<!-- ============ BARRA SUPERIOR (todas as telas com menu) ============ -->
+<div id="topbar">
+  <div class="tb">
+    <div id="tbAvBox" title="Perfil"><canvas id="tbAv"></canvas></div>
+    <div class="who2">
+      <div class="r1"><div id="tbName">Você</div><div class="chip">NÍVEL <span id="lvlNum">1</span></div></div>
+      <div class="r2"><div class="xp"><i id="xpFill"></i></div><span id="xpTxt">0/20 XP</span></div>
     </div>
-    <div class="pill"><span class="coin"></span><span id="walletMenu">0</span></div>
-    <span class="grow"></span>
-    <button class="round" id="btnMute" aria-label="Som">
-      <svg class="ic i-on" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>
-      <svg class="ic i-off" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>
-    </button>
   </div>
-  <div class="stack">
-    <img class="logo" src="logo.svg" alt="Brick by Brick">
-    <div class="scene"><canvas id="hero" aria-hidden="true"></canvas></div>
-    <button class="btn big" id="btnSolo">
-      <svg class="ic" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="6" rx="1.6"/><rect x="3" y="14" width="8" height="6" rx="1.6"/><rect x="13" y="14" width="8" height="6" rx="1.6"/></svg>JOGAR</button>
-    <div class="row2">
-      <button class="btn alt" id="btnDuo"><svg class="ic" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><circle cx="17" cy="9" r="2.8"/><path d="M2.5 20c0-3.6 2.8-6 6.5-6s6.5 2.4 6.5 6M16 14.3c3.2.1 5.5 2 5.5 5.2"/></svg>Duelo</button>
-      <button class="btn alt" id="btnShop"><svg class="ic" viewBox="0 0 24 24"><path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 16l.7 2 2 .7-2 .7L19 21l-.7-1.6-2-.7 2-.7z"/></svg>Personalizar</button>
-    </div>
+  <div class="pillrow"><div class="pill"><span class="coin"></span><span id="walletMenu">0</span></div></div>
+</div>
+
+<!-- ============ INÍCIO ============ -->
+<div id="menu" class="screen">
+  <div id="logoSlot"></div>
+  <div class="heroBox">
+    <canvas id="hero" aria-hidden="true"></canvas>
+  </div>
+  <div class="cta">
+    <div id="homeRec">★ Recorde 0.0 m</div>
+    <button class="btn big" id="btnSolo">JOGAR</button>
   </div>
 </div>
 
 <!-- ============ LOJA ============ -->
-<div id="shop" class="screen nav-screen hidden">
-  <div class="head"><h2 class="serif">Loja</h2><div class="pill"><span class="coin"></span><span id="walletShop">0</span></div></div>
+<div id="shop" class="screen hidden">
+  <div class="pv"><canvas id="shopPv"></canvas><div id="shopName"></div></div>
   <div class="tabs" id="tabs"></div>
   <div class="grid" id="grid"></div>
+  <button class="btn" id="shopBuy" type="button"></button>
 </div>
 
 <!-- ============ DUELO ============ -->
-<div id="duel" class="screen nav-screen hidden">
-  <div class="head"><h2 class="serif">Duelo</h2></div>
-  <div class="glass card"><h3>Como funciona</h3><ul>
+<div id="duel" class="screen hidden">
+  <div class="head"><h2>Duelo</h2></div>
+  <div class="card"><h3>Como funciona</h3><ul>
     <li>Escolha um <b>amigo</b> e monte a sua torre com <b>25 peças</b>.</li>
-    <li>Ele tem <b>1 dia</b> para jogar as <b>mesmas peças</b>, com o mesmo vento e feitiços.</li>
+    <li>Ele tem <b>1 dia</b> para jogar as <b>mesmas peças</b>, com o mesmo vento e tempestades.</li>
     <li>Vence a <b>torre mais alta</b>. Vencedor: <b>+50 moedas</b>. Empate: <b>+30 para cada</b>.</li></ul></div>
-  <div class="glass card hidden" id="duelGuest">
-    <div class="sub" id="duelGuestTxt" style="margin-bottom:10px">Para duelar com amigos, entre com o Google.</div>
+  <div class="card hidden" id="duelGuest">
+    <div class="sub" id="duelGuestTxt" style="margin-bottom:12px">Para duelar com amigos, entre com o Google.</div>
     <button class="btn" id="btnDuelLogin" type="button" style="width:100%">Ir para o Perfil</button></div>
   <div id="duelMain" class="hidden" style="display:contents">
-    <div class="sub" id="duelMsg" style="width:min(430px,100%);text-align:center;color:var(--gold);min-height:1px"></div>
-    <div class="glass card"><h3>Seus duelos</h3><div id="duelList"></div>
+    <div class="sub" id="duelMsg" style="width:min(430px,100%);text-align:center;color:var(--y1);min-height:1px"></div>
+    <div class="card"><h3>Seus duelos</h3><div id="duelList"></div>
       <button class="btn alt mini" id="btnDuelRefresh" type="button" style="margin-top:10px">Atualizar</button></div>
-    <div class="glass card"><h3>Desafiar um amigo</h3>
+    <div class="card"><h3>Desafiar um amigo</h3>
       <input id="friendQ" placeholder="Buscar pelo nome" autocomplete="off" style="margin-bottom:6px"><div id="friendList"></div></div>
   </div>
 </div>
 
 <!-- ============ PERFIL ============ -->
-<div id="profile" class="screen nav-screen hidden">
-  <div class="head"><h2 class="serif">Perfil</h2><div class="pill"><span class="coin"></span><span id="walletProf">0</span></div></div>
-  <div class="glass card prof">
+<div id="profile" class="screen hidden">
+  <div class="card prof">
     <canvas id="profCv"></canvas>
-    <div class="serif big" id="pLvl">Nv. 1</div>
+    <div class="lv" id="pLvl">Nv. 1</div>
     <div class="xp"><i id="pXp"></i></div>
     <div class="sub" id="pXpTxt"></div>
   </div>
-  <div class="glass card" id="pStats"></div>
-  <div class="glass card acct" id="acct">
+  <div class="card" id="pStats"></div>
+  <div class="card acct" id="acct">
     <div id="acctOff" class="sub hidden">Login indisponível neste momento.</div>
     <div id="acctGuest" class="hidden">
-      <div class="sub" style="margin-bottom:10px">Entre com o Google para guardar moedas, skins e recorde na nuvem e jogar em qualquer aparelho.</div>
+      <div class="sub" style="margin-bottom:12px">Entre com o Google para guardar moedas, skins e recorde na nuvem e jogar em qualquer aparelho.</div>
       <button class="btn" id="btnGoogle" type="button">Entrar com Google</button>
-      <div class="sub" id="authMsg" style="margin-top:10px;color:var(--gold);overflow-wrap:anywhere"></div>
+      <div class="sub" id="authMsg" style="margin-top:10px;color:var(--y1);overflow-wrap:anywhere"></div>
     </div>
     <div id="acctUser" class="hidden">
       <div class="who"><div class="av" id="acctAv"></div><div><b id="acctName"></b><div class="sub" id="acctMail"></div></div></div>
-      <div class="sub" id="acctSync" style="margin:8px 0">Progresso salvo na nuvem.</div>
+      <div class="sub" id="acctSync" style="margin:10px 0">Progresso salvo na nuvem.</div>
       <button class="btn alt" id="btnLogout" type="button">Sair</button>
     </div>
   </div>
 </div>
 
-<!-- ============ AJUDA ============ -->
-<div id="help" class="screen nav-screen hidden">
-  <div class="head"><h2 class="serif">Como jogar</h2></div>
-  <div class="glass card only-touch"><h3>No celular</h3><ul>
+<!-- ============ AJUSTES (som, conta, como jogar) ============ -->
+<div id="help" class="screen hidden">
+  <div class="head"><h2>Ajustes</h2></div>
+  <div class="card">
+    <div class="set"><span>Som</span>
+      <button class="round" id="btnMute" aria-label="Som" type="button">
+        <svg class="ic i-on" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>
+        <svg class="ic i-off" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>
+      </button></div>
+    <div class="set"><span>Conta e login</span><button class="btn alt mini" id="btnAcct" type="button">Abrir Perfil</button></div>
+  </div>
+  <div class="card only-touch"><h3>No celular</h3><ul>
     <li><b>Arraste</b> o dedo para os lados para mover a peça.</li>
     <li><b>Toque</b> rápido na tela para girar.</li>
     <li><b>Deslize para baixo</b> e segure para a peça cair mais rápido.</li>
     <li>No <b>Duelo</b>, você escolhe um amigo, joga primeiro, e depois é a vez dele.</li></ul></div>
-  <div class="glass card only-kbd"><h3>No teclado</h3><ul>
+  <div class="card only-kbd"><h3>No teclado</h3><ul>
     <li><b>Sozinho:</b> <kbd>←</kbd> <kbd>→</kbd> mover · <kbd>↑</kbd> girar · <kbd>↓</kbd> descer.</li>
     <li>Também funciona com <kbd>A</kbd> <kbd>D</kbd> <kbd>W</kbd> <kbd>S</kbd> e a barra de espaço para girar.</li>
     <li><kbd>P</kbd> pausa o jogo.</li></ul></div>
-  <div class="glass card"><h3>Regras</h3><ul>
+  <div class="card"><h3>Regras</h3><ul>
     <li>Empilhe as peças na ilha. Se o <b>centro</b> da peça ficar além da borda de quem a apoia, ela <b>cai</b> (e leva consigo o que está em cima). Cada peça que cair tira uma das 3 vidas.</li>
     <li>Pegue as <b>moedas</b> flutuantes e bata <b>recordes de altura</b> para ganhar mais.</li>
-    <li>Ao alcançar a <b>linha de diamantes</b>, a torre é <b>pavimentada</b>: os blocos viram chão firme, você ganha moedas, uma vida e +1 cimento.</li>
-    <li>O botão de sol (ou tecla <kbd>X</kbd>) <b>interrompe a tempestade</b>. Você começa com 1 e ganha mais a cada 12 peças e a cada pavimento.</li>
+    <li>Ao alcançar a <b>linha de pavimento</b>, a torre é <b>pavimentada</b>: os blocos viram chão firme, você ganha moedas, uma vida e +1 cimento.</li>
+    <li>O botão amarelo de <b>sol</b> (ou tecla <kbd>X</kbd>) <b>interrompe a tempestade</b>. Você começa com 1 e ganha mais a cada 12 peças e a cada pavimento.</li>
     <li>O botão verde-água (ou tecla <kbd>Z</kbd>) <b>desfaz</b>: elimina a última peça colocada. Você começa com 1 e ganha mais a cada 8 peças e a cada pavimento.</li>
     <li>A <b>colher de pedreiro</b> (botão roxo, ou tecla <kbd>E</kbd>) cimenta o <b>próximo bloco</b>: ele fica fixo onde pousar.</li>
     <li>De vez em quando sopra um <b>vento</b> leve: ele empurra a peça que está caindo para o lado. Compense arrastando.</li>
-    <li>Uma <b>Nuvem de Tempestade</b> aparece e solta um raio: as peças caem <b>mais rápido</b> por alguns segundos.</li>
+    <li>O <b>slime da tempestade</b> aparece e solta um raio: as peças caem <b>mais rápido</b> por alguns segundos.</li>
     <li>No <b>Duelo</b>, vence a torre mais alta depois de 25 peças.</li>
-    <li>Gaste moedas na <b>Loja</b>: blocos, fundos, bases, chapéus e mascotes.</li></ul></div>
-  <div class="sub" style="width:min(430px,100%);text-align:center;font-size:14px"><a href="privacidade.html" style="color:var(--gold)">Política de Privacidade</a></div>
+    <li>Gaste moedas na <b>Loja</b>: cores, acessórios, blocos, cenários e bases.</li></ul></div>
+  <div class="sub" style="width:min(430px,100%);text-align:center"><a href="privacidade.html" style="color:var(--y1)">Política de Privacidade</a></div>
 </div>
 
 <!-- ============ JOGO ============ -->
 <div id="game" class="hidden">
   <div id="stage"></div>
   <div class="topbtns">
-    <button class="round" id="gMute" aria-label="Som">
+    <button class="round hidden" id="gMute" aria-label="Som" type="button">
       <svg class="ic i-on" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg>
       <svg class="ic i-off" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M17 9l5 6M22 9l-5 6"/></svg>
     </button>
-    <button class="round" id="gPause" aria-label="Pausar"><svg class="ic" viewBox="0 0 24 24" style="fill:currentColor;stroke:none"><rect x="6" y="5" width="4" height="14" rx="1.5"/><rect x="14" y="5" width="4" height="14" rx="1.5"/></svg></button>
+    <button class="round" id="gPause" aria-label="Pausar" type="button"><svg class="ic" viewBox="0 0 24 24" style="fill:#ffd36b;stroke:none"><rect x="6" y="4.5" width="4.5" height="15" rx="2"/><rect x="13.5" y="4.5" width="4.5" height="15" rx="2"/></svg></button>
   </div>
-  <button id="gTool" class="hidden" aria-label="Cimentar o próximo bloco" type="button">
+  <button id="gTool" class="pw hidden" aria-label="Cimentar o próximo bloco" type="button">
     <span class="dia"></span>
-    <svg viewBox="0 0 24 24"><path d="M3 20 14 8l4 4L6 21z"/><path d="M15 7l3-3 3 3-3 3" /></svg>
+    <svg viewBox="0 0 24 24"><path d="M5 19l9-9M12 6l6 6M14 4l6 6-3 3-6-6z"/></svg>
     <span class="n" id="gToolN">3</span>
   </button>
-  <button id="gUndo" class="hidden" aria-label="Desfazer: remove a última peça" type="button">
+  <button id="gUndo" class="pw hidden" aria-label="Desfazer: remove a última peça" type="button">
     <span class="dia"></span>
-    <svg viewBox="0 0 24 24"><path d="M9 7 4 12l5 5"/><path d="M4 12h10a6 6 0 0 1 0 12" transform="translate(0 -5)"/></svg>
+    <svg viewBox="0 0 24 24"><path d="M9 7H4V2"/><path d="M4 7a9 9 0 1 1-1 8"/></svg>
     <span class="n" id="gUndoN">1</span>
   </button>
-  <button id="gSun" class="hidden" aria-label="Parar a tempestade" type="button">
+  <button id="gSun" class="pw hidden" aria-label="Parar a tempestade" type="button">
     <span class="dia"></span>
     <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M18.7 5.3l-2.1 2.1M7.4 16.6l-2.1 2.1"/></svg>
     <span class="n" id="gSunN">1</span>
@@ -313,12 +332,13 @@
 <div id="modal" class="hidden"></div>
 
 <!-- ============ MENU INFERIOR ============ -->
-<nav id="nav">
-  <button data-go="menu" class="on"><svg class="ic" viewBox="0 0 24 24"><path d="M3 11.5 12 4l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>Início</button>
-  <button data-go="shop"><svg class="ic" viewBox="0 0 24 24"><path d="M5 8h14l-1 12H6zM9 8V6a3 3 0 0 1 6 0v2"/></svg>Loja</button>
-  <button data-go="profile"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></svg>Perfil</button>
-  <button data-go="help"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.5 9.5a2.6 2.6 0 1 1 3.6 2.4c-.8.4-1.1.9-1.1 1.8M12 17h.01"/></svg>Ajuda</button>
-</nav>
+<nav id="nav"><div class="in">
+  <button data-go="menu" class="on" type="button"><span class="st"><svg class="ic" viewBox="0 0 24 24"><path d="M4 12 12 5l8 7M6.5 10.5V19h11v-8.5"/></svg></span>Início</button>
+  <button data-go="shop" type="button"><span class="st"><svg class="ic" viewBox="0 0 24 24"><path d="M5.5 9h13l-1.2 10.5H6.7zM9 9V7.5a3 3 0 0 1 6 0V9"/></svg></span>Loja</button>
+  <button data-go="duel" type="button"><span class="st"><svg class="ic" viewBox="0 0 24 24"><path d="M5 5l14 14M19 5 5 19M4 8l4-4M20 8l-4-4"/></svg></span><i id="duelDot" class="hidden">0</i>Duelo</button>
+  <button data-go="profile" type="button"><span class="st"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="8.5" r="3.6"/><path d="M5 20c.6-4.4 3.6-6 7-6s6.4 1.6 7 6"/></svg></span>Perfil</button>
+  <button data-go="help" type="button"><span class="st"><svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.8v2.6M12 18.6v2.6M2.8 12h2.6M18.6 12h2.6M5.5 5.5l1.9 1.9M16.6 16.6l1.9 1.9M18.5 5.5l-1.9 1.9M7.4 16.6l-1.9 1.9"/></svg></span>Ajustes</button>
+</div></nav>
 
 <script src="https://cdn.jsdelivr.net/npm/matter-js@0.19.0/build/matter.min.js"></script>
 <script>window.Matter||document.write('<script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"><\/script>')</script>
@@ -326,6 +346,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.110.1/dist/umd/supabase.min.js"></script>
 <script>if(!window.supabase){document.write('<script src="https://unpkg.com/@supabase/supabase-js@2.110.1/dist/umd/supabase.js"><\/script>')}</script>
 <script>if(!window.supabase){document.write('<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"><\/script>')}</script>
-<script src="game.js?v=20261108"></script>
+<script src="art.js?v=20261110"></script>
+<script src="game.js?v=20261110"></script>
 </body>
 </html>
