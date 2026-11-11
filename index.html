@@ -142,6 +142,7 @@
   .set+.set{border-top:1px solid rgba(169,211,184,.16)}
   .round{width:48px;height:48px;border-radius:16px;display:grid;place-items:center;color:var(--y1);cursor:pointer;padding:0;
     background:rgba(35,74,64,.9);border:2px solid #a9d3b8;box-shadow:0 4px 0 rgba(0,0,0,.3)}
+  #gPause,#gMute{width:40px;height:40px;border-radius:13px}
   .round:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.3)}
   .vs{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:8px;width:100%;padding:6px 0}
   .vs div{display:flex;flex-direction:column;gap:2px;align-items:center}
@@ -160,19 +161,19 @@
     #stage{padding:0}
     canvas.arena{border-radius:0;border:0;box-shadow:none}}
   /* poderes: quadrados arredondados empilhados no canto direito */
-  .pw{position:fixed;right:18px;z-index:30;width:62px;height:62px;padding:0;border:0;background:none;cursor:pointer}
-  .pw .dia{position:absolute;inset:0;border-radius:20px;border:2.5px solid rgba(255,255,255,.55);box-shadow:0 5px 0 rgba(0,0,0,.35),0 10px 16px rgba(0,0,0,.35),inset 0 2px 0 rgba(255,255,255,.35)}
-  .pw svg{position:absolute;left:15px;top:15px;width:32px;height:32px}
-  .pw .n{position:absolute;right:-7px;bottom:-7px;min-width:26px;height:26px;border-radius:13px;background:linear-gradient(180deg,#ffe58a,#f6c443);color:#4a3a0a;font:700 14px/23px var(--font);text-align:center;border:2px solid #b98a14}
+  .pw{position:fixed;right:14px;z-index:8;width:46px;height:46px;padding:0;border:0;background:none;cursor:pointer}
+  .pw .dia{position:absolute;inset:0;border-radius:15px;border:2px solid rgba(255,255,255,.55);box-shadow:0 5px 0 rgba(0,0,0,.35),0 10px 16px rgba(0,0,0,.35),inset 0 2px 0 rgba(255,255,255,.35)}
+  .pw svg{position:absolute;left:11px;top:11px;width:24px;height:24px}
+  .pw .n{position:absolute;right:-6px;bottom:-6px;min-width:20px;height:20px;border-radius:10px;background:linear-gradient(180deg,#ffe58a,#f6c443);color:#4a3a0a;font:700 12px/17px var(--font);text-align:center;border:2px solid #b98a14}
   .pw:active .dia{transform:translateY(3px)}
   .pw.empty{filter:grayscale(.8) brightness(.8)}
   .pw.armed .dia{box-shadow:0 0 0 3px rgba(255,255,255,.7),0 0 22px #ffe27a}
-  #gTool{top:calc(124px + env(safe-area-inset-top))} #gTool .dia{background:linear-gradient(180deg,#a67cf0,#7a4fd0)}
+  #gTool{top:calc(116px + env(safe-area-inset-top))} #gTool .dia{background:linear-gradient(180deg,#a67cf0,#7a4fd0)}
   #gTool svg{fill:#fff;stroke:#fff;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
   #gTool.armed .dia{background:linear-gradient(180deg,#fff3b0,#ffc83d)}
-  #gUndo{top:calc(200px + env(safe-area-inset-top))} #gUndo .dia{background:linear-gradient(180deg,#5fd3c8,#2fa7a4)}
+  #gUndo{top:calc(172px + env(safe-area-inset-top))} #gUndo .dia{background:linear-gradient(180deg,#5fd3c8,#2fa7a4)}
   #gUndo svg{fill:none;stroke:#fff;stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
-  #gSun{top:calc(276px + env(safe-area-inset-top))} #gSun .dia{background:linear-gradient(180deg,#ffd36b,#f0a82c)}
+  #gSun{top:calc(228px + env(safe-area-inset-top))} #gSun .dia{background:linear-gradient(180deg,#ffd36b,#f0a82c)}
   #gSun svg{fill:#fff6c9;stroke:#fff;stroke-width:2.2;stroke-linecap:round}
 
   /* ---------- janelas (pausa, fim de jogo, duelo) ---------- */

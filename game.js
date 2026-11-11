@@ -28,8 +28,10 @@ const TIP_RELEASE = 1.1;       // tombar: ângulo (rad) em que o bloco desencost
 const DROP_PX = 36;            // touch: quanto o dedo precisa descer (em linha reta) para a peça cair rápido
 const WIND_PUSH = .8;          // vento empurra a peça que está caindo (px por frame no pico)
 const CP_FIRST = 330;          // altura (px) da 1ª linha de pavimento; ~50 px = 1 m
-const CP_STEP = 330;           // distância até a próxima linha depois de pavimentar
-const TOOLS_START = 3;         // usos da colher de pedreiro (cimento) no início
+const CP_STEP = 450;           // distância até a próxima linha depois de pavimentar
+const TOOLS_START = 1;         // usos do cimento no início
+const MAX_POWER = 3;           // máximo de cada poder que dá para guardar
+const TOOL_EVERY = 30;         // +1 cimento a cada N peças pousadas
 function fitWorld() { const vw = Math.min(innerWidth, innerHeight * .62); H = Math.max(640, Math.min(940, Math.round(W * innerHeight / Math.max(1, vw)))); WH = H / ZOOM; CAM0 = BASE_Y + GROUND_FROM_BOTTOM / ZOOM - WH; }
 const GOAL = 600;              // altura da meta no modo 2 jogadores
 const LIVES = 3;               // blocos que podem cair antes de perder
@@ -41,8 +43,8 @@ const HYST = .4;               // touch: histerese da trava (maior = a peça só
 const GROUND_FROM_BOTTOM = 105; // distância da superfície da ilha até o fim da tela, no início (maior = ilha mais alta)
 const UNDO_START = 1;          // quantos "desfazer" o jogador começa tendo
 const STOP_START = 1;          // quantos "parar tempestade" o jogador começa tendo
-const STOP_EVERY = 12;         // +1 parar-tempestade a cada N peças (e +1 a cada pavimento)
-const UNDO_EVERY = 8;          // ganha +1 desfazer a cada N peças pousadas (e +1 a cada pavimento)
+const STOP_EVERY = 25;         // +1 parar-tempestade a cada N peças (e +1 a cada pavimento)
+const UNDO_EVERY = 20;         // ganha +1 desfazer a cada N peças pousadas (e +1 a cada pavimento)
 const MOVE_MAX = 9;            // touch: velocidade lateral máxima da peça (menor = mais firme)
 const DEADZONE = 12;           // touch: pixels que o dedo precisa andar antes de contar como arrasto
 const FRICTION = 1;            // atrito entre blocos (mais alto = menos escorrega)
@@ -507,159 +509,59 @@ class Arena {
     }
     return bad;
   }
-  /* bloco sem apoio suficiente: ele e tudo que está em cima formam um grupo rígido que TOMBA pela quina do apoio
-     (o peso puxa para baixo e o grupo gira em torno da quina), depois desencosta e cai solto com a gravidade */
+  /* bloco sem apoio suficiente: ele e tudo que está em cima viram corpos "soltos" na física real (Matter):
+     peso, atrito e colisão decidem se tombam, escorregam ou ficam. Ao repousar, voltam a ser parte firme da torre. */
   topple(bad) {
-    bad = bad.slice().sort((p, q) => q.X.bounds.max.y - p.X.bounds.max.y);   // o mais baixo cai primeiro, levando o que está em cima
-    const X = bad[0].X, dir = bad[0].dir, hull = X.torre.hull;
     const rel = new Set();
     const add = Z => { if (rel.has(Z)) return; rel.add(Z); for (const Y of this.placed) if (Y.torre.sup.indexOf(Z) >= 0) add(Y); };
-    add(X);
-    for (const Z of rel) { Z.torre.sup = []; Z.torre.hull = null; Z.torre.fixed = false; Z.torre.moving = true; }
-    const g = { members: Array.from(rel), set: rel, mode: 'fly', dir, P: null, w: 0, th: 0, v: { x: 0, y: 0 }, age: 0 };
-    if (hull && dir) { g.mode = 'tip'; g.P = { x: dir > 0 ? hull[1] : hull[0], y: hull[2] }; }
-    this.slides.push(g);
-    
+    for (const x of bad) add(x.X);
+    const low = bad.slice().sort((p, q) => q.X.bounds.max.y - p.X.bounds.max.y)[0];
+    for (const Z of rel) {
+      const t_ = Z.torre; t_.sup = []; t_.hull = null; t_.fixed = false; t_.tilted = false; t_.moving = true;
+      Body.setStatic(Z, false); Body.setVelocity(Z, { x: 0, y: 0 }); Body.setAngularVelocity(Z, 0);
+    }
+    if (low.dir) Body.setVelocity(low.X, { x: low.dir * .35, y: 0 });   // empurrãozinho para o lado do peso (quando está quase em equilíbrio)
+    const old = this.slides.find(g => g.members.some(m => rel.has(m)));
+    if (old) { for (const m of rel) if (!old.members.includes(m)) old.members.push(m); old.still = 0; }
+    else this.slides.push({ members: Array.from(rel), age: 0, still: 0 });
   }
-  groupHitsPoly(g) {
-    for (const m of g.members) for (const p of partsOf(m)) {
-      for (const o of (g.ghost ? [this.base] : this.placed.concat([this.base]))) {
-        if (g.set.has(o)) continue;
-        const ob = o.bounds; if (p.bounds.max.x <= ob.min.x || p.bounds.min.x >= ob.max.x || p.bounds.max.y <= ob.min.y || p.bounds.min.y >= ob.max.y) continue;
-        for (const q of partsOf(o)) {
-          if (p.bounds.max.x <= q.bounds.min.x || p.bounds.min.x >= q.bounds.max.x || p.bounds.max.y <= q.bounds.min.y || p.bounds.min.y >= q.bounds.max.y) continue;
-          if (satDepth(p.vertices, q.vertices) > 1.5) return true;
-        }
+  /* acompanha os blocos soltos: quando todos param (velocidade ~ 0), eles voltam a ser peças firmes */
+  stepSlides() {
+    for (const g of this.slides.slice()) {
+      g.members = g.members.filter(m => this.placed.includes(m));
+      if (!g.members.length) { this.slides.splice(this.slides.indexOf(g), 1); continue; }
+      g.age++;
+      let calm = true;
+      for (const m of g.members) {
+        const v = m.velocity, sp = Math.hypot(v.x, v.y);
+        if (sp > V_FALL) Body.setVelocity(m, { x: v.x * V_FALL / sp, y: v.y * V_FALL / sp });   // sem atravessar o chão em queda longa
+        if (sp > .25 || Math.abs(m.angularVelocity) > .006) calm = false;
       }
+      g.still = calm ? g.still + 1 : 0;
+      if (g.still >= 20 || g.age > 60 * 12) this.restGroup(g);
     }
-    return false;
   }
-  groupCenter(g) {
-    let x = 0, y = 0, n = 0;
-    for (const m of g.members) for (const p of partsOf(m)) { x += p.position.x; y += p.position.y; n++; }
-    return { x: x / n, y: y / n };
-  }
-  rotateGroup(g, ang, pt) { for (const m of g.members) Body.rotate(m, ang, pt); }
-  moveGroupBy(g, dx, dy) { for (const m of g.members) Body.translate(m, { x: dx, y: dy }); }
-  /* o grupo parou: se está reto, vira peça normal (confere o apoio de novo); se está torto, vira entulho firme onde parou */
-  stopGroup(g) {
-    const frozen = () => {
-      const i = this.slides.indexOf(g); if (i >= 0) this.slides.splice(i, 1);
-      for (const m of g.members) { m.torre.moving = false; m.torre.fixed = true; m.torre.sup = []; m.torre.hull = null; m.torre.tilted = true; }
-      sfx.land();
-    };
-    // quanto o grupo está torto em relação a "deitado/de pé" (múltiplos de 90°)
-    const ang = g.members[0].angle || 0, Q = Math.PI / 2;
-    const r = ((ang + Q / 2) % Q + Q) % Q - Q / 2;
-    if (Math.abs(r) < .09) {
-      // quase reto: alinha de vez e confere o apoio como qualquer peça (se não tiver apoio, tomba de novo)
-      if (Math.abs(r) > .002) { const C = this.groupCenter(g); this.rotateGroup(g, -r, C); if (this.groupHitsPoly(g)) this.rotateGroup(g, r, C); }
-      g.th = 0; g.w = 0; this.settle(g); return;
-    }
-    // inclinado e encostado só numa quina: não pode ficar parado. Continua tombando em volta dessa quina
-    g.jam = (g.jam || 0) + 1;
-    if (g.jam <= 14) {
-      let P = this.contactPoint(g);
-      if (!P) { let low = -1e9, lx = 0; for (const m of g.members) for (const p of partsOf(m)) for (const v of p.vertices) if (v.y > low) { low = v.y; lx = v.x; } P = { x: lx, y: low }; }
-      const C = this.groupCenter(g), d = C.x - P.x;
-      // tentativas alternadas: ora tomba para o lado do peso, ora "assenta" deitando sobre o que está embaixo
-      const flatten = g.jam % 2 === 0 || Math.abs(d) <= 1.5;
-      g.P = P; g.mode = 'tip'; g.w = 0; g.th = 0; g.age = Math.min(g.age, 200);
-      if (flatten) { g.flat = true; g.dir = -Math.sign(r) || 1; } else { g.flat = false; g.dir = Math.sign(d); }
-      return;
-    }
-    // não consegue tombar (entalado): se está pousado em algo, fica; se está no ar, solta e cai (só a ilha o segura)
-    if (g.ghost || this.restsOnSomething(g)) { frozen(); return; }
-    g.jam = 0; g.ghost = true; g.mode = 'fly'; g.age = Math.min(g.age, 300);
-    g.v = { x: (g.dir || 1) * 1.2, y: 1 }; g.w = (g.dir || 1) * .02;
-  }
-  /* onde o grupo toca em outro bloco (ponto de contato mais próximo): é a quina em torno da qual ele tomba */
-  contactPoint(g) {
-    const dseg = (px, py, a, b) => {
-      const vx = b.x - a.x, vy = b.y - a.y, L = vx * vx + vy * vy || 1, t = clamp(((px - a.x) * vx + (py - a.y) * vy) / L, 0, 1);
-      return Math.hypot(px - (a.x + t * vx), py - (a.y + t * vy));
-    };
-    const dpoly = (px, py, V) => { let d = 1e9; for (let i = 0; i < V.length; i++) d = Math.min(d, dseg(px, py, V[i], V[(i + 1) % V.length])); return d; };
-    let best = 6, P = null;
-    for (const m of g.members) for (const p of partsOf(m)) {
-      for (const o of this.placed.concat([this.base])) {
-        if (g.set.has(o)) continue;
-        for (const q of partsOf(o)) {
-          if (p.bounds.max.x < q.bounds.min.x - 6 || p.bounds.min.x > q.bounds.max.x + 6 || p.bounds.max.y < q.bounds.min.y - 6 || p.bounds.min.y > q.bounds.max.y + 6) continue;
-          for (const v of p.vertices) { const d = dpoly(v.x, v.y, q.vertices); if (d < best) { best = d; P = { x: v.x, y: v.y }; } }
-          for (const v of q.vertices) { const d = dpoly(v.x, v.y, p.vertices); if (d < best) { best = d; P = { x: v.x, y: v.y }; } }
-        }
-      }
-    }
-    return P;
-  }
-  /* o ponto mais baixo do grupo está pousado em cima de alguma coisa (ilha ou topo de outro bloco)? */
-  restsOnSomething(g) {
-    let low = -1e9, lx = 0;
-    for (const m of g.members) for (const p of partsOf(m)) for (const v of p.vertices) if (v.y > low) { low = v.y; lx = v.x; }
-    if (low >= BASE_Y - 10) return true;
-    for (const o of this.placed) {
-      if (g.set.has(o)) continue;
-      for (const q of partsOf(o)) if (lx >= q.bounds.min.x - 4 && lx <= q.bounds.max.x + 4 && Math.abs(q.bounds.min.y - low) <= 6) return true;
-    }
-    return false;
-  }
-  settle(g) {
+  restGroup(g) {
     const i = this.slides.indexOf(g); if (i >= 0) this.slides.splice(i, 1);
-    for (const m of g.members) { m.torre.moving = false; m.torre.n = (m.torre.n || 0) + 1; }
-    for (const m of g.members) { const sp = this.supportOf(m); m.torre.sup = sp.bodies; m.torre.hull = sp.hull; }
+    const Q = Math.PI / 2, off = a_ => ((a_ + Q / 2) % Q + Q) % Q - Q / 2;
+    for (const m of g.members) {
+      Body.setVelocity(m, { x: 0, y: 0 }); Body.setAngularVelocity(m, 0); Body.setStatic(m, true);
+      m.torre.moving = false; m.torre.n = (m.torre.n || 0) + 1;
+      const r = off(m.angle);
+      if (Math.abs(r) < .09 && Math.abs(r) > .002) { const ang = m.angle; Body.setAngle(m, ang - r); if (this.hits(m)) Body.setAngle(m, ang); }
+      m.torre.tilted = Math.abs(off(m.angle)) > .01;
+    }
     const bad = [];
     for (const m of g.members) {
-      if (m.torre.n >= 4) { m.torre.fixed = true; m.torre.sup = []; continue; }
+      const t_ = m.torre;
+      if (t_.tilted || t_.n >= 8) { t_.fixed = true; t_.sup = []; t_.hull = null; continue; }
+      const sp = this.supportOf(m); t_.sup = sp.bodies; t_.hull = sp.hull;
+    }
+    for (const m of g.members) {
+      const t_ = m.torre; if (t_.fixed) continue;
       for (const x of this.chainCheck(m)) if (!bad.some(o => o.X === x.X)) bad.push(x);
     }
     if (bad.length) this.topple(bad); else sfx.land();
-  }
-  stepSlides() {
-    for (const g of this.slides.slice()) {
-      if (!this.slides.includes(g)) continue;
-      g.members = g.members.filter(m => this.placed.includes(m)); if (!g.members.length) { this.slides.splice(this.slides.indexOf(g), 1); continue; }
-      if (++g.age > 420) { if (!g.ghost) { g.ghost = true; g.mode = 'fly'; g.age = 300; g.v = { x: 0, y: 2 }; } else { for (const m of g.members) { m.torre.moving = false; m.torre.fixed = true; m.torre.sup = []; } this.slides.splice(this.slides.indexOf(g), 1); continue; } }
-      if (g.mode === 'tip') {
-        // física de um corpo rígido apoiado numa quina: o peso (centro de massa fora da borda) gera torque e o grupo gira
-        let sx = 0, I = 0, n = 0;
-        for (const m of g.members) for (const p of partsOf(m)) { const dx = p.position.x - g.P.x, dy = p.position.y - g.P.y; sx += dx; I += dx * dx + dy * dy + S * S / 6; n++; }
-        let tau = G_FALL * sx; const minT = G_FALL * n * TIP_MIN_ARM;
-        if (g.dir * tau < minT) tau = g.dir * minT;
-        g.w = g.flat ? g.dir * .035 : clamp(g.w + tau / I, -OMEGA_MAX, OMEGA_MAX);
-        this.rotateGroup(g, g.w, g.P);
-        if (this.groupHitsPoly(g)) { this.rotateGroup(g, -g.w, g.P); this.stopGroup(g); continue; }
-        g.th += g.w;
-        if (g.flat) {   // deitando: ao ficar reto, confere o apoio
-          const an = g.members[0].angle || 0, Q = Math.PI / 2, rr = ((an + Q / 2) % Q + Q) % Q - Q / 2;
-          if (Math.abs(rr) < .03) { this.stopGroup(g); continue; }
-        } else if (Math.abs(g.th) >= TIP_RELEASE) {
-          const C = this.groupCenter(g), rx = C.x - g.P.x, ry = C.y - g.P.y;
-          g.v = { x: -ry * g.w, y: rx * g.w }; g.mode = 'fly';
-        }
-      } else {
-        // queda livre: gravidade puxa para baixo, o giro adquirido continua
-        g.v.y = Math.min(g.v.y + G_FALL, V_FALL);
-        const steps = Math.max(1, Math.ceil(Math.hypot(g.v.x, g.v.y) / 3)); let stopped = false;
-        for (let k = 0; k < steps && !stopped; k++) {
-          const dx = g.v.x / steps, dy = g.v.y / steps, da = g.w / steps;
-          this.moveGroupBy(g, dx, dy);
-          if (da) this.rotateGroup(g, da, this.groupCenter(g));
-          g.th += da;
-          if (this.groupHitsPoly(g)) {
-            // roçou na quina do apoio: empurra para o lado do excesso de peso (escorrega pela quina) e segue caindo
-            let freed = false;
-            if (g.dir) for (let n = 1; n <= 16 && !freed; n++) { this.moveGroupBy(g, g.dir * 2, 0); if (!this.groupHitsPoly(g)) freed = true; }
-            if (!freed) {
-              if (g.dir) this.moveGroupBy(g, -g.dir * 32, 0);
-              if (da) this.rotateGroup(g, -da, this.groupCenter(g));
-              g.th -= da; this.moveGroupBy(g, -dx, -dy); stopped = true;
-            }
-          }
-        }
-        if (stopped) this.stopGroup(g);
-      }
-    }
   }
   land() {
     const b = this.cur; this.cur = null; b.torre.locked = true;
@@ -670,8 +572,10 @@ class Arena {
     else { const bad = this.chainCheck(b); if (bad.length) this.topple(bad); }
     this.spawnIn = .6; this.setMood('happy', .7); sfx.land();
     SAVE.blocks++; addCoins(1); this.earned += 1;
-    if (++this.landed % UNDO_EVERY === 0) { this.undos++; this.pop('+1 desfazer', '#9be59f'); }
-    if (this.landed % STOP_EVERY === 0) { this.stops++; this.pop('+1 parar tempestade', '#ffe27a'); }
+    this.landed++;
+    if (this.landed % UNDO_EVERY === 0 && this.undos < MAX_POWER) { this.undos++; this.pop('+1 desfazer', '#9be59f'); }
+    if (this.landed % STOP_EVERY === 0 && this.stops < MAX_POWER) { this.stops++; this.pop('+1 parar tempestade', '#ffe27a'); }
+    if (this.landed % TOOL_EVERY === 0 && this.tools < MAX_POWER) { this.tools++; this.pop('+1 cimento', '#cfd8e8'); }
   }
   /* poder: interrompe a tempestade (a nuvem vai embora e as peças voltam ao ritmo normal) */
   stopStorm() {
@@ -694,15 +598,23 @@ class Arena {
     this.slides = this.slides.filter(g => g.members.length);
     for (const m of this.placed) if (m.torre.sup) m.torre.sup = m.torre.sup.filter(x => x !== b);
     this.pop('Peça removida', '#bff3ff'); beep(300, .09, 'triangle', .03);
+    // tirar um bloco muda o peso: confere o equilíbrio do que sobrou (um contrapeso pode ter saído)
+    const bad = [];
+    for (const m of this.placed) { if (m.torre.moving || m.torre.fixed || m.torre.glue) continue; for (const x of this.chainCheck(m)) if (!bad.some(o => o.X === x.X)) bad.push(x); }
+    if (bad.length) this.topple(bad);
   }
   /* linha de pavimento: ao alcançá-la, a torre vira chão firme (blocos fixos) e a próxima linha sobe */
   pave() {
     for (const b of this.placed) { b.torre.fixed = true; b.torre.sup = []; b.torre.moving = false; }
     this.slides = [];
-    this.cpLevel = this.height + CP_STEP; this.cpFlash = 1; this.tools++; this.undos++; this.stops++;
+    this.cpLevel = this.height + CP_STEP; this.cpFlash = 1;
+    // o pavimento dá 1 poder: o que o jogador tem menos (até o máximo)
+    const pw = [['tools', 'cimento'], ['undos', 'desfazer'], ['stops', 'sol']].sort((p, q) => this[p[0]] - this[q[0]])[0];
+    let bonus = '';
+    if (this[pw[0]] < MAX_POWER) { this[pw[0]]++; bonus = '+1 ' + pw[1]; }
     if (this.lives < LIVES) this.lives++;
     addCoins(10); this.earned += 10; sfx.rec(); this.setMood('happy', 1.2);
-    this.pop('Pavimentado! +10', '#bff3ff'); this.pop('+1 cimento · desfazer · sol', '#cfd8e8');
+    this.pop('Pavimentado! +10', '#bff3ff'); if (bonus) this.pop(bonus, '#cfd8e8');
   }
   useTool() {
     if (!this.cur || this.cur.torre.locked || this.state() !== 'play') return;
@@ -918,10 +830,10 @@ class Arena {
     if (fill > 0) { const g = c.createLinearGradient(bx + 32, 0, bx + 114, 0); g.addColorStop(0, '#b48cff'); g.addColorStop(1, '#ff5a6e'); c.fillStyle = g; rr(bx + 32, by + 9, Math.max(8, 82 * fill), 8, 4); c.fill(); }
     if (this.fastLeft > 0) { c.fillStyle = '#ffd0e0'; c.font = '600 12px ' + F; c.textAlign = 'center'; c.fillText('tempestade · peças rápidas', W / 2, by + 42); }
     // próxima peça (canto de cima, à direita)
-    c.fillStyle = 'rgba(35,74,64,.88)'; c.strokeStyle = '#a9d3b8'; c.lineWidth = 2; rr(W - 88, 12, 74, 60, 16); c.fill(); c.stroke();
-    c.fillStyle = '#cfe9d4'; c.font = '700 11px ' + F; c.textAlign = 'center'; c.fillText('PRÓXIMA', W - 51, 29);
-    const cs = SHAPES[this.next], s2 = 11;
-    cs.forEach(([cx, cy], i) => drawPart(c, quadFake(W - 51 + cx * s2 - s2 / 2, 50 + cy * s2 - s2 / 2, s2, i + 1), this.next, L.blocks, this.t));
+    c.fillStyle = 'rgba(35,74,64,.88)'; c.strokeStyle = '#a9d3b8'; c.lineWidth = 2; rr(W - 80, 12, 62, 52, 14); c.fill(); c.stroke();
+    c.fillStyle = '#cfe9d4'; c.font = '700 10px ' + F; c.textAlign = 'center'; c.fillText('PRÓXIMA', W - 49, 27);
+    const cs = SHAPES[this.next], s2 = 9;
+    cs.forEach(([cx, cy], i) => drawPart(c, quadFake(W - 49 + cx * s2 - s2 / 2, 45 + cy * s2 - s2 / 2, s2, i + 1), this.next, L.blocks, this.t));
     // vento
     if (ev && ev.kind === 'wind') {
       const warn = ev.t < 1.6; c.font = '600 18px ' + F; c.textAlign = 'center'; c.fillStyle = warn ? '#ffe58a' : '#cfe9d4';
@@ -1017,10 +929,10 @@ function loop(now) {
   const dt = Math.min(.1, (now - Game.last) / 1000); Game.last = now;
   if (!Game.paused && !Game.over) {
     Game.acc += dt;
-    while (Game.acc >= 1 / 60) { for (const a of Game.arenas) a.update(1 / 60); Game.acc -= 1 / 60; checkEnd(); if (Game.over) break; }
+    while (Game.acc >= 1 / 60) { for (const a of Game.arenas) { try { a.update(1 / 60); } catch (e) { Game.errs = (Game.errs || 0) + 1; console.error('update', e); } } Game.acc -= 1 / 60; try { checkEnd(); } catch (e) { console.error(e); } if (Game.over) break; }
   }
-  for (const a of Game.arenas) a.render();
-  syncTool();
+  for (const a of Game.arenas) { try { a.render(); } catch (e) { console.error('render', e); } }
+  try { syncTool(); } catch (e) {}
   Game.raf = requestAnimationFrame(loop);
 }
 function checkEnd() {
@@ -1322,7 +1234,7 @@ $('gSun').onclick = () => { const a = Game.arenas[0]; if (a && !Game.paused && !
 $('gUndo').onclick = () => { const a = Game.arenas[0]; if (a && !Game.paused && !Game.over) a.undo(); };
 function syncTool() {
   const a = Game.arenas[0], b = $('gTool');
-  const on = !!a && curScreen === 'game';
+  const on = !!a && curScreen === 'game' && !Game.over;
   for (const id of ['gTool', 'gUndo', 'gSun']) { const tb = $(id); if (tb) tb.classList.toggle('hidden', !on); }
   if (!a || !b) return;
   const n = String(a.tools); if (b.dataset.n !== n) { b.dataset.n = n; $('gToolN').textContent = n; }
