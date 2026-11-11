@@ -47,8 +47,11 @@ const STOP_EVERY = 25;         // +1 parar-tempestade a cada N peças (e +1 a ca
 const UNDO_EVERY = 20;         // ganha +1 desfazer a cada N peças pousadas (e +1 a cada pavimento)
 const MOVE_MAX = 9;            // touch: velocidade lateral máxima da peça (menor = mais firme)
 const DEADZONE = 12;           // touch: pixels que o dedo precisa andar antes de contar como arrasto
-const FRICTION = 1;            // atrito entre blocos (mais alto = menos escorrega)
-const FRICTION_STATIC = 10;    // atrito parado (alto = o bloco "gruda" onde pousou)
+const FRICTION = .9;           // atrito entre blocos (mais alto = menos escorrega)
+const FRICTION_STATIC = 1;     // atrito parado. ATENÇÃO: valores altos (ex. 10) fazem o Matter 'explodir' e arremessar blocos
+const SUBSTEPS = 4;            // a física roda 4x por quadro: torres altas só ficam firmes com passos pequenos
+const FREEZE_PX = 360;         // blocos mais de ~12 casas abaixo do topo, já parados, viram chão firme (poupa o celular)
+const LAND_V = 1.6;            // velocidade com que a peça entra na física ao encostar
 const WIND_FORCE = 0.00005;    // força do vento sobre a torre (0 desliga). Leve de propósito.
 const EVT_FIRST = 18;          // 1º evento (vento ou feitiço) depois de ~10 s; depois a cada 12–20 s
 const SPELL_TIME = 14;         // duração do feitiço do vilão (segundos)
@@ -344,6 +347,7 @@ function satDepth(A, B) {      // sobreposição mínima entre dois polígonos c
   }
   return min;
 }
+const tiltOf = o => !o.isStatic || Math.abs((((o.angle + Math.PI / 4) % (Math.PI / 2)) + Math.PI / 2) % (Math.PI / 2) - Math.PI / 4) > .01;   // corpo solto ou torto: usa colisão exata
 const partsOf = b => (b.parts.length > 1 ? b.parts.slice(1) : b.parts);
 const held = (keys, list) => list.some(k => keys.has(k));
 const keysDown = new Set();
@@ -395,7 +399,7 @@ class Arena {
     this.base = Bodies.rectangle(WW / 2, BASE_Y + 15, BASE_W, 30, { isStatic: true, friction: FRICTION, frictionStatic: FRICTION_STATIC, restitution: 0, label: 'base' });
     Composite.add(this.world, this.base);
     this.rb = mulberry32(this.seed ^ 0x9e3779b9); this.rc = mulberry32(this.seed ^ 0x85ebca6b); this.re = mulberry32(this.seed ^ 0xc2b2ae35);
-    this.placed = []; this.slides = []; this.cur = null; this.bag = []; this.coinsField = []; this.pops = [];
+    this.placed = []; this.cur = null; this.bag = []; this.coinsField = []; this.pops = [];
     this.next = this.draw7();
     this.lives = LIVES; this.height = 0; this.record = 0; this.earned = 0;
     this.camY = CAM0; this.t = 0; this.undos = UNDO_START; this.stops = STOP_START; this.landed = 0; this.cpLevel = CP_FIRST; this.cpFlash = 0; this.tools = TOOLS_START; this.cement = false; this.calm = true; this.spawnIn = .5; this.wobble = 0;
@@ -432,7 +436,7 @@ class Arena {
       const ob = o.bounds;
       if (bb.max.x <= ob.min.x + E || bb.min.x >= ob.max.x - E || bb.max.y <= ob.min.y + E || bb.min.y >= ob.max.y - E) continue;
       for (const p of bp) for (const q of partsOf(o)) {
-        if (o.torre && o.torre.tilted) { if (p.bounds.max.x > q.bounds.min.x && p.bounds.min.x < q.bounds.max.x && p.bounds.max.y > q.bounds.min.y && p.bounds.min.y < q.bounds.max.y && satDepth(p.vertices, q.vertices) > 1.2) return true; continue; }
+        if (tiltOf(o)) { if (p.bounds.max.x > q.bounds.min.x && p.bounds.min.x < q.bounds.max.x && p.bounds.max.y > q.bounds.min.y && p.bounds.min.y < q.bounds.max.y && satDepth(p.vertices, q.vertices) > 1.2) return true; continue; }
         if (p.bounds.max.x > q.bounds.min.x + E && p.bounds.min.x < q.bounds.max.x - E && p.bounds.max.y > q.bounds.min.y + E && p.bounds.min.y < q.bounds.max.y - E) return true;
       }
     }
@@ -474,102 +478,23 @@ class Arena {
       this.land(); return;
     }
   }
-  /* pouso: calcula o apoio. Se o centro de massa (com o peso de tudo que está em cima) passa da borda do apoio, a peça cai */
-  supportOf(b, skip) {
-    const set = new Set(); let lo = 1e9, hi = -1e9, ytop = 0, ys = 0, yn = 0;
-    for (const p of partsOf(b)) for (const o of this.placed.concat([this.base])) {
-      if (o === b || (skip && skip.has(o))) continue;
-      for (const q of partsOf(o)) {
-        if (Math.abs(q.bounds.min.y - p.bounds.max.y) > 1.6) continue;
-        const a = Math.max(p.bounds.min.x, q.bounds.min.x), z = Math.min(p.bounds.max.x, q.bounds.max.x);
-        if (z - a > 1) { lo = Math.min(lo, a); hi = Math.max(hi, z); ytop = q.bounds.min.y; ys += q.bounds.min.y; yn++; if (o !== this.base) set.add(o); }
-      }
+  /* física: todas as peças pousadas são corpos reais do Matter (peso, atrito, colisão). A peça nova empurra a torre toda:
+     se estiver mal apoiada, ela gira, escorrega e cai sozinha. Só o que já está bem fundo e parado vira chão firme. */
+  stepPhysics() {
+    let top = BASE_Y;
+    for (const b of this.placed) if (b.position.y < BASE_Y + 50) top = Math.min(top, b.bounds.min.y);
+    for (const b of this.placed) {
+      if (b.isStatic) continue;
+      const v = b.velocity, sp = Math.hypot(v.x, v.y);
+      if (sp > V_FALL) Body.setVelocity(b, { x: v.x * V_FALL / sp, y: v.y * V_FALL / sp });   // sem atravessar o chão em queda longa
+      if (b.bounds.min.y > top + FREEZE_PX && sp < .15 && Math.abs(b.angularVelocity) < .004) Body.setStatic(b, true);
     }
-    return { bodies: Array.from(set), hull: hi > lo ? [lo, hi, ys / yn] : null, y: ytop };
-  }
-  chainCheck(N) {
-    const anc = [], seen = new Set(), q = [N];
-    while (q.length) { const x = q.pop(); if (seen.has(x)) continue; seen.add(x); anc.push(x); for (const s_ of x.torre.sup) if (this.placed.includes(s_)) q.push(s_); }
-    const memo = new Map();
-    const load = X => {
-      if (memo.has(X)) return memo.get(X);
-      let m = 0, mx = 0; for (const p of partsOf(X)) { m++; mx += (p.bounds.min.x + p.bounds.max.x) / 2; }
-      for (const Y of this.placed) {
-        if (Y.torre.glue || Y.torre.sup.indexOf(X) < 0) continue;
-        const L = load(Y), k = 1 / Y.torre.sup.length; m += L.m * k; mx += L.mx * k;
-      }
-      const r = { m, mx }; memo.set(X, r); return r;
-    };
-    const bad = [];
-    for (const X of anc) {
-      const t_ = X.torre; if (t_.fixed || t_.glue) continue;
-      if (!t_.hull) { bad.push({ X, dir: 0 }); continue; }
-      const L = load(X), c = L.mx / L.m, h = t_.hull;
-      if (c <= h[0] + .5 || c >= h[1] - .5) bad.push({ X, dir: c > (h[0] + h[1]) / 2 ? 1 : -1 });
-    }
-    return bad;
-  }
-  /* bloco sem apoio suficiente: ele e tudo que está em cima viram corpos "soltos" na física real (Matter):
-     peso, atrito e colisão decidem se tombam, escorregam ou ficam. Ao repousar, voltam a ser parte firme da torre. */
-  topple(bad) {
-    const rel = new Set();
-    const add = Z => { if (rel.has(Z)) return; rel.add(Z); for (const Y of this.placed) if (Y.torre.sup.indexOf(Z) >= 0) add(Y); };
-    for (const x of bad) add(x.X);
-    const low = bad.slice().sort((p, q) => q.X.bounds.max.y - p.X.bounds.max.y)[0];
-    for (const Z of rel) {
-      const t_ = Z.torre; t_.sup = []; t_.hull = null; t_.fixed = false; t_.tilted = false; t_.moving = true;
-      Body.setStatic(Z, false); Body.setVelocity(Z, { x: 0, y: 0 }); Body.setAngularVelocity(Z, 0);
-    }
-    if (low.dir) Body.setVelocity(low.X, { x: low.dir * .35, y: 0 });   // empurrãozinho para o lado do peso (quando está quase em equilíbrio)
-    const old = this.slides.find(g => g.members.some(m => rel.has(m)));
-    if (old) { for (const m of rel) if (!old.members.includes(m)) old.members.push(m); old.still = 0; }
-    else this.slides.push({ members: Array.from(rel), age: 0, still: 0 });
-  }
-  /* acompanha os blocos soltos: quando todos param (velocidade ~ 0), eles voltam a ser peças firmes */
-  stepSlides() {
-    for (const g of this.slides.slice()) {
-      g.members = g.members.filter(m => this.placed.includes(m));
-      if (!g.members.length) { this.slides.splice(this.slides.indexOf(g), 1); continue; }
-      g.age++;
-      let calm = true;
-      for (const m of g.members) {
-        const v = m.velocity, sp = Math.hypot(v.x, v.y);
-        if (sp > V_FALL) Body.setVelocity(m, { x: v.x * V_FALL / sp, y: v.y * V_FALL / sp });   // sem atravessar o chão em queda longa
-        if (sp > .25 || Math.abs(m.angularVelocity) > .006) calm = false;
-      }
-      g.still = calm ? g.still + 1 : 0;
-      if (g.still >= 20 || g.age > 60 * 12) this.restGroup(g);
-    }
-  }
-  restGroup(g) {
-    const i = this.slides.indexOf(g); if (i >= 0) this.slides.splice(i, 1);
-    const Q = Math.PI / 2, off = a_ => ((a_ + Q / 2) % Q + Q) % Q - Q / 2;
-    for (const m of g.members) {
-      Body.setVelocity(m, { x: 0, y: 0 }); Body.setAngularVelocity(m, 0); Body.setStatic(m, true);
-      m.torre.moving = false; m.torre.n = (m.torre.n || 0) + 1;
-      const r = off(m.angle);
-      if (Math.abs(r) < .09 && Math.abs(r) > .002) { const ang = m.angle; Body.setAngle(m, ang - r); if (this.hits(m)) Body.setAngle(m, ang); }
-      m.torre.tilted = Math.abs(off(m.angle)) > .01;
-    }
-    const bad = [];
-    for (const m of g.members) {
-      const t_ = m.torre;
-      if (t_.tilted || t_.n >= 8) { t_.fixed = true; t_.sup = []; t_.hull = null; continue; }
-      const sp = this.supportOf(m); t_.sup = sp.bodies; t_.hull = sp.hull;
-    }
-    for (const m of g.members) {
-      const t_ = m.torre; if (t_.fixed) continue;
-      for (const x of this.chainCheck(m)) if (!bad.some(o => o.X === x.X)) bad.push(x);
-    }
-    if (bad.length) this.topple(bad); else sfx.land();
   }
   land() {
     const b = this.cur; this.cur = null; b.torre.locked = true;
-    Body.setVelocity(b, { x: 0, y: 0 }); Body.setAngularVelocity(b, 0); Body.setPosition(b, { x: b.position.x, y: b.position.y });
-    const sp = this.supportOf(b); b.torre.sup = sp.bodies; b.torre.hull = sp.hull;
-    b.torre.flash = 1; this.placed.push(b); Composite.add(this.world, b); Body.setStatic(b, true);
-    if (this.cement) { this.cement = false; b.torre.glue = true; b.torre.fixed = true; this.pop('Cimentado!', '#cfd8e8'); }
-    else { const bad = this.chainCheck(b); if (bad.length) this.topple(bad); }
+    Body.setVelocity(b, { x: 0, y: LAND_V }); Body.setAngularVelocity(b, 0);
+    b.torre.flash = 1; this.placed.push(b); Composite.add(this.world, b);
+    if (this.cement) { this.cement = false; b.torre.glue = true; Body.setStatic(b, true); this.pop('Cimentado!', '#cfd8e8'); }   // cimento: fica preso onde encostou
     this.spawnIn = .6; this.setMood('happy', .7); sfx.land();
     SAVE.blocks++; addCoins(1); this.earned += 1;
     this.landed++;
@@ -594,19 +519,12 @@ class Arena {
     if (!b) { this.pop('Nada para desfazer', '#ffe08a'); return; }
     if (this.undos <= 0) { this.pop('Sem desfazer', '#ff8fab'); return; }
     this.undos--; Composite.remove(this.world, b); this.placed.pop();
-    for (const g of this.slides) g.members = g.members.filter(m => m !== b);   // vale também para a peça em queda
-    this.slides = this.slides.filter(g => g.members.length);
-    for (const m of this.placed) if (m.torre.sup) m.torre.sup = m.torre.sup.filter(x => x !== b);
     this.pop('Peça removida', '#bff3ff'); beep(300, .09, 'triangle', .03);
-    // tirar um bloco muda o peso: confere o equilíbrio do que sobrou (um contrapeso pode ter saído)
-    const bad = [];
-    for (const m of this.placed) { if (m.torre.moving || m.torre.fixed || m.torre.glue) continue; for (const x of this.chainCheck(m)) if (!bad.some(o => o.X === x.X)) bad.push(x); }
-    if (bad.length) this.topple(bad);
+    // sem conta de equilíbrio: o que estava apoiado no bloco removido simplesmente reage ao peso (física real)
   }
   /* linha de pavimento: ao alcançá-la, a torre vira chão firme (blocos fixos) e a próxima linha sobe */
   pave() {
-    for (const b of this.placed) { b.torre.fixed = true; b.torre.sup = []; b.torre.moving = false; }
-    this.slides = [];
+    for (const b of this.placed) if (!b.isStatic) Body.setStatic(b, true);   // pavimento: a torre vira chão firme
     this.cpLevel = this.height + CP_STEP; this.cpFlash = 1;
     // o pavimento dá 1 poder: o que o jogador tem menos (até o máximo)
     const pw = [['tools', 'cimento'], ['undos', 'desfazer'], ['stops', 'sol']].sort((p, q) => this[p[0]] - this[q[0]])[0];
@@ -656,21 +574,23 @@ class Arena {
       this.stepCur();
       if (this.cur && this.cur.position.y > this.floorY()) this.loseCur();
     }
-    Engine.update(this.engine, 1000 / 60);
+    for (let k = 0; k < SUBSTEPS; k++) Engine.update(this.engine, 1000 / 60 / SUBSTEPS);
     for (let i = Math.max(0, this.placed.length - 4); i < this.placed.length; i++) { const t_ = this.placed[i].torre; if (t_.flash > 0) t_.flash = Math.max(0, t_.flash - dt * 3.5); }
-    this.stepSlides();
+    this.stepPhysics();
     // peças caídas e altura da torre
-    let top = BASE_Y, wob = 0;
+    let top = BASE_Y, wob = 0, fast = 0, restless = false;
     for (const b of this.placed.slice()) {
-      if (b.position.y > (b.torre.moving ? this.floorY() : BASE_Y + 600)) {   // torre apoiada nunca "cai" só porque a câmera subiu
+      if (b.position.y > (!b.isStatic ? this.floorY() : BASE_Y + 600)) {   // torre apoiada nunca "cai" só porque a câmera subiu
         Composite.remove(this.world, b); this.placed.splice(this.placed.indexOf(b), 1);
         this.lives--; this.setMood('sad', 1.2); sfx.lose(); this.pop('Caiu!', '#ff8fab'); continue;
       }
-      if (b.torre.moving) { wob += 3; continue; }
+      const spd = b.isStatic ? 0 : Math.hypot(b.velocity.x, b.velocity.y);
+      if (spd > 1.5) { wob += 3; fast++; continue; }      // caindo ou voando: não conta como parte da torre
+      if (spd > .4) restless = true;
       if (b.position.y < BASE_Y + 50) top = Math.min(top, b.bounds.min.y);
     }
     this.height = Math.max(0, BASE_Y - top);
-    this.calm = this.slides.length === 0;
+    this.calmN = (restless || fast) ? 0 : (this.calmN || 0) + 1; this.calm = this.calmN >= 12;
     if (this.cpFlash > 0) this.cpFlash -= dt;
     if (this.height >= this.cpLevel && this.calm && this.cur) this.pave();
     this.wobble += (wob - this.wobble) * .08;
@@ -682,7 +602,7 @@ class Arena {
     this.camY += (Math.min(CAM0, BASE_Y - this.height - WH * .5) - this.camY) * .08;
     if (!this.cur) {
       this.spawnIn -= dt;
-      if (this.spawnIn <= 0 && this.lives > 0 && this.slides.length === 0) {
+      if (this.spawnIn <= 0 && this.lives > 0 && (this.calm || this.spawnIn < -1.2)) {   // espera a torre assentar (no máximo 1,2 s)
         if (this.limit && this.spawned >= this.limit) { if (this.endIn === null) this.endIn = 2.8; }
         else this.spawn();
       }
