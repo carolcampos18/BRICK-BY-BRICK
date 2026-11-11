@@ -18,7 +18,7 @@ const W = 400, WW = W / ZOOM;  // W = largura da tela lógica; WW = largura do m
 let H = 700, WH = 1400, CAM0 = 0;   // tamanho lógico da arena (a altura H se adapta à tela do celular)
 const S = 30;                  // tamanho de cada quadradinho do bloco (maior = blocos maiores)
 const BASE_Y = 560;            // altura da superfície da ilha
-const BASE_W = 160;            // largura da ilha
+const BASE_W = 200;            // largura da ilha
 const GRID = S / 2;            // "travas": a peça anda de meio em meio quadradinho e encaixa no alinhamento
 const G_FALL = .32;            // gravidade dos blocos que perderam o apoio (px/frame²)
 const V_FALL = 14;             // velocidade máxima de queda
@@ -47,11 +47,13 @@ const STOP_EVERY = 25;         // +1 parar-tempestade a cada N peças (e +1 a ca
 const UNDO_EVERY = 20;         // ganha +1 desfazer a cada N peças pousadas (e +1 a cada pavimento)
 const MOVE_MAX = 9;            // touch: velocidade lateral máxima da peça (menor = mais firme)
 const DEADZONE = 12;           // touch: pixels que o dedo precisa andar antes de contar como arrasto
-const FRICTION = .9;           // atrito entre blocos (mais alto = menos escorrega)
+const FRICTION = 1;            // atrito entre blocos (mais alto = menos escorrega)
 const FRICTION_STATIC = 1;     // atrito parado. ATENÇÃO: valores altos (ex. 10) fazem o Matter 'explodir' e arremessar blocos
 const SUBSTEPS = 4;            // a física roda 4x por quadro: torres altas só ficam firmes com passos pequenos
 const FREEZE_PX = 360;         // blocos mais de ~12 casas abaixo do topo, já parados, viram chão firme (poupa o celular)
-const LAND_V = 1.6;            // velocidade com que a peça entra na física ao encostar
+const INERTIA_K = 2;           // giro mais "pesado": as peças tombam mais devagar e de forma mais gradual (1 = mais nervoso)
+const AIR = .035;              // resistência do ar: segura o balanço e as quedas
+const LAND_V = .8;             // velocidade com que a peça entra na física ao encostar
 const WIND_FORCE = 0.00005;    // força do vento sobre a torre (0 desliga). Leve de propósito.
 const EVT_FIRST = 18;          // 1º evento (vento ou feitiço) depois de ~10 s; depois a cada 12–20 s
 const SPELL_TIME = 14;         // duração do feitiço do vilão (segundos)
@@ -421,7 +423,8 @@ class Arena {
     const type = this.next; this.next = this.draw7();
     // opções novas a cada quadradinho (o Matter apaga "chamfer" do objeto) e atrito definido em cada parte E no corpo
     const parts_ = SHAPES[type].map(([cx, cy]) => Bodies.rectangle(cx * S, cy * S, S, S, { friction: FRICTION, frictionStatic: FRICTION_STATIC, restitution: 0, density: .002 }));
-    const body = Body.create({ parts: parts_, friction: FRICTION, frictionStatic: FRICTION_STATIC, restitution: 0, frictionAir: .02, density: .002 });
+    const body = Body.create({ parts: parts_, friction: FRICTION, frictionStatic: FRICTION_STATIC, restitution: 0, frictionAir: AIR, density: .002 });
+    Body.setInertia(body, body.inertia * INERTIA_K);
     body.torre = { type, locked: false, sup: [], hull: null, fixed: false, glue: false, calmN: 0, age: 0 };
     Body.setPosition(body, { x: WW / 2, y: this.camY + 185 / ZOOM });
     this.tx = WW / 2; this.gi = null;
