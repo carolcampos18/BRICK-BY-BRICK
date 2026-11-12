@@ -9,6 +9,8 @@ if (typeof Matter === 'undefined') {
   return;
 }
 const { Engine, Bodies, Body, Composite, Events } = Matter;
+// teste com torres altas e estreitas: com o valor padrão (5) o Matter derrubava torres bem alinhadas sozinho; com 1 elas ficam firmes
+if (Matter.Resolver) Matter.Resolver._frictionNormalMultiplier = 1;
 try { document.fonts.load('600 16px Fredoka'); document.fonts.load('700 32px Fredoka'); } catch (e) {}
 const ART = window;   // funções de desenho do art.js (slime, drawVillain, island, scene...)
 
@@ -49,8 +51,10 @@ const MOVE_MAX = 9;            // touch: velocidade lateral máxima da peça (me
 const DEADZONE = 12;           // touch: pixels que o dedo precisa andar antes de contar como arrasto
 const FRICTION = 1;            // atrito entre blocos (mais alto = menos escorrega)
 const FRICTION_STATIC = 1;     // atrito parado. ATENÇÃO: valores altos (ex. 10) fazem o Matter 'explodir' e arremessar blocos
-const SUBSTEPS = 4;            // a física roda 4x por quadro: torres altas só ficam firmes com passos pequenos
+const SUBSTEPS = 5;            // a física roda 5x por quadro: torres altas só ficam firmes com passos pequenos
+const SLOP = .02;              // folga de encosto entre blocos (menor = pilhas mais firmes)
 const FREEZE_PX = 360;         // blocos mais de ~12 casas abaixo do topo, já parados, viram chão firme (poupa o celular)
+const STICKY = 40;            // "grude": tolerância para peças quase em equilíbrio (0 = física pura; 80 = bem perdoador). Peça com ~1/3 de casa a mais para fora ainda fica.
 const INERTIA_K = 2;           // giro mais "pesado": as peças tombam mais devagar e de forma mais gradual (1 = mais nervoso)
 const AIR = .035;              // resistência do ar: segura o balanço e as quedas
 const LAND_V = .8;             // velocidade com que a peça entra na física ao encostar
@@ -396,7 +400,7 @@ class Arena {
   }
   reset() {
     this.engine = Engine.create({ gravity: { x: 0, y: 1 } });
-    this.engine.positionIterations = 10; this.engine.velocityIterations = 8;
+    this.engine.positionIterations = 14; this.engine.velocityIterations = 10;
     this.world = this.engine.world;
     this.base = Bodies.rectangle(WW / 2, BASE_Y + 15, BASE_W, 30, { isStatic: true, friction: FRICTION, frictionStatic: FRICTION_STATIC, restitution: 0, label: 'base' });
     Composite.add(this.world, this.base);
@@ -422,8 +426,8 @@ class Arena {
     this.spawned++;
     const type = this.next; this.next = this.draw7();
     // opções novas a cada quadradinho (o Matter apaga "chamfer" do objeto) e atrito definido em cada parte E no corpo
-    const parts_ = SHAPES[type].map(([cx, cy]) => Bodies.rectangle(cx * S, cy * S, S, S, { friction: FRICTION, frictionStatic: FRICTION_STATIC, restitution: 0, density: .002 }));
-    const body = Body.create({ parts: parts_, friction: FRICTION, frictionStatic: FRICTION_STATIC, restitution: 0, frictionAir: AIR, density: .002 });
+    const parts_ = SHAPES[type].map(([cx, cy]) => Bodies.rectangle(cx * S, cy * S, S, S, { friction: FRICTION, frictionStatic: FRICTION_STATIC, restitution: 0, density: .002, slop: SLOP }));
+    const body = Body.create({ parts: parts_, friction: FRICTION, frictionStatic: FRICTION_STATIC, restitution: 0, frictionAir: AIR, density: .002, slop: SLOP });
     Body.setInertia(body, body.inertia * INERTIA_K);
     body.torre = { type, locked: false, sup: [], hull: null, fixed: false, glue: false, calmN: 0, age: 0 };
     Body.setPosition(body, { x: WW / 2, y: this.camY + 185 / ZOOM });
@@ -483,6 +487,17 @@ class Arena {
   }
   /* física: todas as peças pousadas são corpos reais do Matter (peso, atrito, colisão). A peça nova empurra a torre toda:
      se estiver mal apoiada, ela gira, escorrega e cai sozinha. Só o que já está bem fundo e parado vira chão firme. */
+  /* tolerância: uma molinha leve segura a peça "em pé" enquanto ela está quase reta (até ~8°). Se o peso passar muito da borda, a molinha
+     solta e a peça tomba normalmente. Sem isso, qualquer milímetro além da borda já derruba a torre. */
+  assist() {
+    if (!STICKY) return;
+    const Q = Math.PI / 2;
+    for (const b of this.placed) {
+      if (b.isStatic) continue;
+      const off = (((b.angle + Q / 2) % Q) + Q) % Q - Q / 2, fade = clamp((.14 - Math.abs(off)) / .08, 0, 1);
+      if (fade > 0) b.torque -= STICKY * .001 / .12 * b.mass * off * fade;
+    }
+  }
   stepPhysics() {
     let top = BASE_Y;
     for (const b of this.placed) if (b.position.y < BASE_Y + 50) top = Math.min(top, b.bounds.min.y);
@@ -577,7 +592,7 @@ class Arena {
       this.stepCur();
       if (this.cur && this.cur.position.y > this.floorY()) this.loseCur();
     }
-    for (let k = 0; k < SUBSTEPS; k++) Engine.update(this.engine, 1000 / 60 / SUBSTEPS);
+    for (let k = 0; k < SUBSTEPS; k++) { this.assist(); Engine.update(this.engine, 1000 / 60 / SUBSTEPS); }
     for (let i = Math.max(0, this.placed.length - 4); i < this.placed.length; i++) { const t_ = this.placed[i].torre; if (t_.flash > 0) t_.flash = Math.max(0, t_.flash - dt * 3.5); }
     this.stepPhysics();
     // peças caídas e altura da torre
