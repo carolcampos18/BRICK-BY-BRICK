@@ -109,8 +109,8 @@ const mig = (k, id) => (MIGRATE[k] && MIGRATE[k][id]) || id;
 const accOf = h => (h && h !== 'nenhum') ? h : null;
 const THEMES = {
   noite:  { top:'#06151c', bot:'#14433f', stars:1,  orb:'moon' },
-  dia:    { top:'#5fb8f0', bot:'#dff6ff', stars:0,  orb:'sun',  clouds:true },
-  por:    { top:'#3a2a6e', bot:'#ff9e6e', stars:.35, orb:'sunlow', clouds:true },
+  dia:    { top:'#2a6db5', bot:'#6db0da', stars:0,  orb:'sun',  clouds:true },
+  por:    { top:'#2a1f5e', bot:'#d8704f', stars:.35, orb:'sunlow', clouds:true },
   aurora: { top:'#04111f', bot:'#0d4a45', stars:1,  aurora:true },
   espaco: { top:'#05040f', bot:'#2b1252', stars:1,  orb:'planet' },
 };
@@ -276,7 +276,7 @@ function drawSkyTh(c, th, h, t, stars, camY) {
     c.strokeStyle = 'rgba(255,214,140,.8)'; c.lineWidth = 5; c.beginPath(); c.ellipse(0, 0, 50, 12, -.35, 0, 7); c.stroke(); c.restore();
   }
   if (th.clouds) {
-    c.fillStyle = th.orb === 'sunlow' ? 'rgba(255,190,170,.5)' : 'rgba(255,255,255,.75)';
+    c.fillStyle = th.orb === 'sunlow' ? 'rgba(255,190,170,.4)' : 'rgba(255,255,255,.5)';
     for (let i = 0; i < 4; i++) {
       const cx = ((i * 150 + t * (6 + i * 2)) % (W + 160)) - 80;
       const cy = (((i * 210 - camY * .12) % (H + 120)) + H + 120) % (H + 120) - 60;
@@ -542,7 +542,7 @@ class Arena {
   }
   /* linha de pavimento: ao alcançá-la, a torre vira chão firme (blocos fixos) e a próxima linha sobe */
   pave() {
-    for (const b of this.placed) if (!b.isStatic) Body.setStatic(b, true);   // pavimento: a torre vira chão firme
+    for (const b of this.placed) { b.torre.paved = true; if (!b.isStatic) Body.setStatic(b, true); }   // pavimento: a torre vira chão firme (e muda de tom)
     this.cpLevel = this.height + CP_STEP; this.cpFlash = 1;
     // o pavimento dá 1 poder: o que o jogador tem menos (até o máximo)
     const pw = [['tools', 'cimento'], ['undos', 'desfazer'], ['stops', 'sol']].sort((p, q) => this[p[0]] - this[q[0]])[0];
@@ -680,9 +680,16 @@ class Arena {
     const b = this.cur; if (!b) return;
     const bd = b.bounds, gap = this.dropGap(), y0 = this.camY - 40, y1 = gap < 1e8 ? bd.max.y + gap : this.camY + WH + 40;
     const g = c.createLinearGradient(0, y0, 0, y1);
-    g.addColorStop(0, 'rgba(190,240,255,0)'); g.addColorStop(.35, 'rgba(190,240,255,.10)'); g.addColorStop(1, 'rgba(190,240,255,.22)');
+    g.addColorStop(0, 'rgba(210,245,255,0)'); g.addColorStop(.3, 'rgba(210,245,255,.14)'); g.addColorStop(1, 'rgba(210,245,255,.34)');
     c.fillStyle = g; c.fillRect(bd.min.x, y0, bd.max.x - bd.min.x, y1 - y0);
-    if (gap < 1e8) { c.fillStyle = 'rgba(220,250,255,.55)'; c.fillRect(bd.min.x, y1 - 2, bd.max.x - bd.min.x, 2); }
+    // bordas da faixa: um traço escuro por baixo e um claro por cima, para aparecer em qualquer cenário
+    c.save(); c.lineCap = 'round';
+    for (const [col, lw] of [['rgba(5,25,50,.45)', 5], ['rgba(255,255,255,.75)', 2.4]]) {
+      c.strokeStyle = col; c.lineWidth = lw; c.beginPath();
+      c.moveTo(bd.min.x, y0); c.lineTo(bd.min.x, y1); c.moveTo(bd.max.x, y0); c.lineTo(bd.max.x, y1); c.stroke();
+    }
+    c.restore();
+    if (gap < 1e8) { c.fillStyle = 'rgba(5,25,50,.5)'; c.fillRect(bd.min.x, y1 - 3, bd.max.x - bd.min.x, 5); c.fillStyle = 'rgba(255,255,255,.9)'; c.fillRect(bd.min.x, y1 - 2, bd.max.x - bd.min.x, 2.6); }
   }
   drawCheckpoint(c) {
     const y = BASE_Y - this.cpLevel, d = 28, n = Math.ceil(WW / d);
@@ -690,8 +697,9 @@ class Arena {
     const near = clamp(1 - (this.cpLevel - this.height) / 120, 0, 1);
     c.shadowColor = '#bff3ff'; c.shadowBlur = 8 + near * 14;
     c.fillStyle = 'rgba(190,245,255,' + (.5 + near * .4) + ')'; c.strokeStyle = 'rgba(255,255,255,.7)'; c.lineWidth = 1;
-    for (let i = 0; i < n; i++) { const x = d * (i + .5); c.beginPath(); c.arc(x, y, 6.5, 0, 7); c.fill(); }
-    c.shadowBlur = 0; c.fillStyle = '#e9fbff'; c.font = '700 24px Fredoka, Nunito, ui-rounded, system-ui, sans-serif'; c.textAlign = 'left'; c.fillText('PAVIMENTO  ✦', 14 / ZOOM, y - 22);
+    c.strokeStyle = 'rgba(5,30,60,.65)'; c.lineWidth = 3;
+    for (let i = 0; i < n; i++) { const x = d * (i + .5); c.beginPath(); c.arc(x, y, 6.5, 0, 7); c.stroke(); c.fill(); }
+    c.shadowColor = 'rgba(5,25,50,.9)'; c.shadowBlur = 6; c.fillStyle = '#ffffff'; c.font = '700 24px Fredoka, Nunito, ui-rounded, system-ui, sans-serif'; c.textAlign = 'left'; c.fillText('PAVIMENTO  ✦', 14 / ZOOM, y - 22);
     c.restore();
   }
 
@@ -720,6 +728,10 @@ class Arena {
       for (const p of ps) {
         drawPart(c, p, b.torre.type, L.blocks, this.t);
         if (b.torre.flash > 0) { c.save(); c.beginPath(); p.vertices.forEach((v, i) => i ? c.lineTo(v.x, v.y) : c.moveTo(v.x, v.y)); c.closePath(); c.fillStyle = 'rgba(255,255,255,' + b.torre.flash * .75 + ')'; c.fill(); c.restore(); }
+        if (b.torre.paved) {   // trecho pavimentado: tom azul-acinzentado sutil + borda clara (mostra até onde a torre está segura)
+          c.save(); c.beginPath(); p.vertices.forEach((v, i) => i ? c.lineTo(v.x, v.y) : c.moveTo(v.x, v.y)); c.closePath();
+          c.fillStyle = 'rgba(70,95,165,.26)'; c.fill(); c.strokeStyle = 'rgba(200,220,255,.3)'; c.lineWidth = 1.2; c.stroke(); c.restore();
+        }
         if (b.torre.glue || (b === this.cur && this.cement)) {
           c.save(); c.beginPath(); p.vertices.forEach((v, i) => i ? c.lineTo(v.x, v.y) : c.moveTo(v.x, v.y)); c.closePath();
           if (b.torre.glue) { c.fillStyle = 'rgba(225,232,245,.22)'; c.fill(); }
